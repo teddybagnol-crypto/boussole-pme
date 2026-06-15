@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boussole — Pilotage PME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --primary: #4338ca;
+            --primary-light: #e0e7ff;
+            --primary-hover: #3730a3;
+            --border: #cbd5e1;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .navbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; top: 0; z-index: 999;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+        .navbar-left { display: flex; align-items: center; gap: 2.5rem; }
+        .brand {
+            font-weight: 800; font-size: 1.4rem; color: var(--primary);
+            display: flex; align-items: center; gap: 0.5rem;
+            text-decoration: none; cursor: pointer;
+        }
+        .nav-tabs { display: flex; gap: 0.5rem; }
+        .nav-tab {
+            padding: 0.5rem 1rem; border-radius: 8px;
+            color: var(--text-sub); text-decoration: none;
+            font-weight: 600; font-size: 0.95rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            transition: all 0.2s; border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .nav-tab:hover, .nav-tab.active { color: var(--primary); background: var(--primary-light); }
+        .nav-tab.active { border-color: rgba(67,56,202,0.2); }
+        .user-menu { display: flex; align-items: center; gap: 1.5rem; }
+        .color-picker-wrapper {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.85rem; color: var(--text-sub); font-weight: 600;
+            border-right: 1px solid var(--border); padding-right: 1.2rem;
+        }
+        .color-picker-wrapper input[type="color"] {
+            -webkit-appearance: none; border: none;
+            width: 28px; height: 28px; border-radius: 50%;
+            cursor: pointer; background: none; padding: 0;
+            box-shadow: 0 0 0 2px var(--border);
+        }
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .logout-btn {
+            color: var(--text-sub); text-decoration: none;
+            font-size: 0.9rem; font-weight: 600;
+            padding: 0.5rem 1rem; border-radius: 6px; transition: all 0.2s;
+        }
+        .logout-btn:hover { color: var(--danger); background: var(--danger-bg); }
+        .container {
+            max-width: 1100px; margin: 2.5rem auto;
+            padding: 0 1.5rem; padding-bottom: 6rem;
+        }
+        .welcome { text-align: center; margin-bottom: 3rem; }
+        .welcome h1 { margin: 0; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; }
+        .welcome p { margin: 0.75rem 0 0 0; color: var(--text-sub); font-size: 1.2rem; }
+        .hub-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 2rem; }
+        .hub-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2.5rem; text-align: center;
+            cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .hub-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 12px 20px -5px rgba(67,56,202,0.15); }
+        .hub-icon { font-size: 3rem; color: var(--primary); margin-bottom: 1.5rem; }
+        .hub-card h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 700; }
+        .hub-card p { color: var(--text-sub); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.5; }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 700; margin-bottom: 0.6rem; font-size: 0.95rem; }
+        input[type="file"] {
+            width: 100%; padding: 1.5rem;
+            border: 2px dashed var(--border); border-radius: 10px;
+            background: #f8fafc; box-sizing: border-box; cursor: pointer;
+            font-weight: 600; color: var(--text-sub);
+        }
+        input[type="text"] {
+            width: 100%; padding: 0.85rem 1.25rem;
+            border: 1px solid var(--border); border-radius: 10px;
+            box-sizing: border-box; font-size: 1rem;
+            background: var(--card-bg); color: var(--text-main);
+        }
+        .btn {
+            background: var(--primary); color: white; border: none;
+            padding: 0.85rem 2rem; border-radius: 10px;
+            font-weight: 700; cursor: pointer; width: 100%;
+            font-size: 1.05rem; transition: all 0.2s;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-outline {
+            background: transparent; color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 0.5rem 1.2rem; border-radius: 8px;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-outline:hover { background: var(--primary-light); }
+        .btn-sm {
+            background: var(--primary); color: white; border: none;
+            padding: 0.5rem 1.2rem; border-radius: 8px;
+            font-weight: 600; cursor: pointer; font-size: 0.88rem;
+            transition: all 0.2s;
+        }
+        .btn-sm:hover { background: var(--primary-hover); }
+        .btn-danger-sm {
+            background: transparent; color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.3rem 0.8rem; border-radius: 6px;
+            font-weight: 600; cursor: pointer; font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-danger-sm:hover { background: var(--danger-bg); }
+        .results-section { display: none; }
+        .section-title {
+            font-size: 1.4rem; font-weight: 800;
+            margin-top: 0; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.6rem;
+            border-bottom: 2px solid var(--border); padding-bottom: 0.75rem;
+        }
+        .metrics-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; margin-bottom: 2rem; }
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, #f8fafc 100%);
+            padding: 1.5rem; border-radius: 14px;
+            border: 1px solid var(--border); text-align: center;
+        }
+        .metric-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); }
+        .metric-value { font-size: 2.2rem; font-weight: 900; margin: 0.35rem 0; color: var(--primary); }
+        .metric-sub { font-size: 0.85rem; color: var(--text-sub); }
+        .chat-input-container {
+            display: none; position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 0; z-index: 1000;
+        }
+        .chat-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 1rem; flex-direction: column; }
+        .chat-row { display: flex; gap: 1rem; }
+        .chat-inner input {
+            flex: 1; border-radius: 12px;
+            border: 1px solid var(--border); padding: 0.9rem 1.5rem;
+            background: var(--card-bg); color: var(--text-main);
+            font-size: 1rem; outline: none;
+        }
+        .chat-inner input:focus { border-color: var(--primary); }
+        .chat-inner .btn { width: auto; }
+        .loading { display: none; text-align: center; color: var(--primary); font-weight: 700; margin-top: 1.5rem; }
+        .chat-loading { display: none; color: var(--primary); font-size: 0.9rem; padding: 0.25rem 0; }
+        .tendance-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .tendance-impact { font-weight: 700; font-size: 1.1rem; min-width: 70px; }
+        .info-box { background: #f8fafc; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; }
+        .info-box-title { font-weight: 700; margin-bottom: 0.4rem; }
+        .info-box-text { color: var(--text-sub); font-size: 0.95rem; line-height: 1.6; }
+        .predictif-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .predictif-box { background: #f8fafc; border-radius: 8px; padding: 1rem; }
+        .predictif-label { font-size: 0.85rem; color: var(--text-sub); font-weight: 700; margin-bottom: 0.4rem; }
+        .predictif-value { font-size: 1.6rem; font-weight: 900; color: var(--primary); }
+        .scenario-box { border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .scenario-title { font-weight: 700; margin-bottom: 0.25rem; }
+        .reco-card { border-left: 4px solid; padding: 1rem 1.25rem; background: #f8fafc; border-radius: 0 8px 8px 0; margin-bottom: 1rem; }
+        .reco-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .reco-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; color: white; }
+        .reco-action { font-weight: 700; }
+        .reco-detail { color: var(--text-sub); font-size: 0.95rem; line-height: 1.6; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .kpi-box { background: #f8fafc; border-radius: 8px; padding: 1rem; border: 2px solid var(--border); }
+        .kpi-box.alerte { border-color: var(--danger); }
+        .kpi-nom { font-size: 0.85rem; font-weight: 700; color: var(--text-sub); margin-bottom: 0.4rem; }
+        .kpi-valeur { font-size: 1.4rem; font-weight: 900; }
+        .kpi-cible { font-size: 0.85rem; color: var(--text-sub); margin-top: 0.2rem; }
+        .kpi-statut { font-size: 0.8rem; font-weight: 700; margin-top: 0.3rem; }
+
+        /* ===== ÉVOLUTION & PILOTAGE ===== */
+        .note-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 80px; height: 80px; border-radius: 50%;
+            font-size: 2.5rem; font-weight: 900; border: 4px solid;
+        }
+        .note-A { background: #d1fae5; color: #065f46; border-color: #10b981; }
+        .note-B { background: #dcfce7; color: #166534; border-color: #22c55e; }
+        .note-C { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+        .note-D { background: #ffedd5; color: #9a3412; border-color: #f97316; }
+        .note-E { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+        .score-bar-wrap { background: #f1f5f9; border-radius: 20px; height: 12px; overflow: hidden; margin: 0.5rem 0; }
+        .score-bar { height: 100%; border-radius: 20px; transition: width 1s ease; }
+        .col-pill {
+            padding: 0.35rem 0.85rem; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg); color: var(--text-sub);
+            transition: all 0.15s; user-select: none; display: inline-block;
+        }
+        .col-pill.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .col-selector { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .evo-upload-zone {
+            border: 2px dashed var(--border); border-radius: 14px; padding: 2rem;
+            text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s;
+        }
+        .evo-upload-zone:hover, .evo-upload-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
+        .periode-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.25rem;
+            display: flex; align-items: center; gap: 1.25rem;
+            margin-bottom: 0.75rem; transition: all 0.2s;
+        }
+        .periode-card:hover { border-color: var(--primary); }
+        .periode-note {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; font-weight: 900; flex-shrink: 0; border: 3px solid;
+        }
+        .kpi-evo-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 2rem; }
+        .kpi-evo-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.25rem;
+        }
+        .kpi-evo-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kpi-evo-val { font-size: 1.6rem; font-weight: 900; }
+        .kpi-evo-delta { font-size: 0.85rem; font-weight: 700; margin-top: 0.2rem; }
+        .kpi-evo-delta.up { color: var(--success); }
+        .kpi-evo-delta.down { color: var(--danger); }
+        .kpi-evo-delta.flat { color: var(--text-sub); }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+        .chart-card-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chart-card canvas { max-height: 200px; }
+        .chart-full { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .evo-loading { display: none; text-align: center; padding: 3rem; color: var(--primary); font-weight: 700; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-sub); }
+        .empty-icon { font-size: 3rem; color: var(--border); margin-bottom: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-up { animation: fadeIn 0.4s ease-out forwards; }
+
+        /* ===== BENCHMARK SECTORIEL ===== */
+        .bench-cat-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .bench-cat-btn { padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1.5px solid var(--border); background: var(--card-bg); color: var(--text-sub); transition: all 0.2s; white-space: nowrap; }
+        .bench-cat-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .bench-cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .bench-cat-section { display: none; }
+        .bench-cat-section.active { display: block; }
+        .bench-cat-header { font-size: 1.1rem; font-weight: 800; margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 0.6rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); }
+        .bench-metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem; }
+        .bench-metric-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; transition: border-color 0.2s; }
+        .bench-metric-card:hover { border-color: var(--primary); }
+        .bench-metric-name { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); margin-bottom: 0.75rem; line-height: 1.4; min-height: 2em; }
+        .bench-val-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.2rem; }
+        .bench-val-box { text-align: center; flex: 1; }
+        .bench-val-num { font-size: 1.05rem; font-weight: 900; line-height: 1; }
+        .bench-val-lbl { font-size: 0.63rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); margin-top: 0.15rem; }
+        .bench-val-box.moy .bench-val-num { color: var(--primary); font-size: 1.3rem; }
+        .bench-track-wrap { position: relative; height: 8px; background: #e2e8f0; border-radius: 4px; margin: 0.9rem 0 0.8rem; }
+        .bench-track-bg { position: absolute; inset: 0; border-radius: 4px; background: linear-gradient(90deg,#dbeafe,#e0e7ff,#c7d2fe); }
+        .bench-track-median { position: absolute; width: 3px; height: 20px; background: var(--primary); border-radius: 2px; top: -6px; transform: translateX(-50%); }
+        .bench-track-user { position: absolute; width: 14px; height: 14px; border-radius: 50%; top: -3px; transform: translateX(-50%); border: 2.5px solid var(--card-bg); display: none; transition: left 0.3s; }
+        .bench-user-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .bench-user-input { width: 72px; padding: 0.3rem 0.5rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.9rem; font-weight: 700; background: var(--card-bg); color: var(--text-main); outline: none; }
+        .bench-user-input:focus { border-color: var(--primary); }
+        .bench-user-unit { font-size: 0.8rem; color: var(--text-sub); font-weight: 600; }
+        .bench-user-status { font-size: 0.72rem; font-weight: 800; margin-left: auto; text-align: right; }
+
+        /* ===== ALERTES ===== */
+        .alerte-card { border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; border-left: 5px solid; display: flex; gap: 1rem; align-items: flex-start; }
+        .alerte-card.critique { background: var(--danger-bg); border-left-color: var(--danger); }
+        .alerte-card.attention { background: var(--warning-bg); border-left-color: var(--warning); }
+        .alerte-card.ok { background: var(--success-bg); border-left-color: var(--success); }
+        .alerte-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .alerte-kpi { font-weight: 800; font-size: 1rem; }
+        .alerte-delta { font-size: 0.85rem; font-weight: 700; margin: 0.2rem 0; }
+        .alerte-msg { font-size: 0.9rem; line-height: 1.5; }
+        .alerte-action-text { font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 0.5rem; }
+
+        /* ===== WHAT-IF ===== */
+        .slider-wrap { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 0.75rem; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .slider-kpi-name { font-weight: 700; font-size: 0.95rem; }
+        .slider-badge { background: var(--primary-light); color: var(--primary); font-weight: 800; font-size: 0.9rem; padding: 0.2rem 0.75rem; border-radius: 20px; min-width: 65px; text-align: center; transition: all 0.2s; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        .slider-base { font-size: 0.8rem; color: var(--text-sub); margin-top: 0.3rem; }
+        .whatif-result-box { background: var(--primary-light); border: 1.5px solid rgba(67,56,202,0.25); border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem; display: none; }
+        .whatif-score-row { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .whatif-note-badge { font-size: 2.2rem; font-weight: 900; width: 66px; height: 66px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid; }
+        .whatif-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+        .whatif-kpi-item { background: var(--card-bg); border-radius: 8px; padding: 0.75rem; border: 1px solid var(--border); }
+        .whatif-kpi-nm { font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
+        .whatif-kpi-v { font-size: 1.2rem; font-weight: 900; }
+        .whatif-kpi-d { font-size: 0.8rem; font-weight: 700; }
+
+        /* ===== UX SIMPLIFICATION ===== */
+        .hero-badge { display:inline-flex; align-items:center; gap:0.4rem; background:var(--primary-light); color:var(--primary); font-size:0.78rem; font-weight:700; padding:0.3rem 0.85rem; border-radius:20px; margin-bottom:1rem; }
+        .step-row { display:flex; gap:0; margin:0.5rem 0 1.5rem; }
+        .step-item { flex:1; text-align:center; position:relative; }
+        .step-item:not(:last-child)::after { content:''; position:absolute; top:22px; right:0; width:50%; height:2px; background:var(--border); z-index:0; }
+        .step-item:not(:first-child)::before { content:''; position:absolute; top:22px; left:0; width:50%; height:2px; background:var(--border); z-index:0; }
+        .step-num { width:46px; height:46px; border-radius:50%; background:var(--primary); color:white; font-size:1.1rem; font-weight:900; display:flex; align-items:center; justify-content:center; margin:0 auto 0.6rem; position:relative; z-index:1; }
+        .step-title { font-weight:800; font-size:0.92rem; margin-bottom:0.2rem; }
+        .step-text { font-size:0.78rem; color:var(--text-sub); line-height:1.4; padding:0 0.3rem; }
+        .bar-wrap { background:#e2e8f0; border-radius:20px; height:6px; overflow:hidden; margin:0.3rem 0 0.15rem; }
+        .bar-fill { height:100%; border-radius:20px; transition:width 1.2s ease; }
+        .score-legend-strip { display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.75rem; }
+        .sls-item { display:flex; align-items:center; gap:0.3rem; font-size:0.72rem; font-weight:800; padding:0.2rem 0.55rem; border-radius:6px; }
+        .ttip { position:relative; display:inline-flex; align-items:center; cursor:help; border-bottom:1px dashed var(--text-sub); }
+        .ttip::after { content:attr(data-tip); display:none; position:absolute; bottom:130%; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:0.45rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:500; white-space:normal; max-width:240px; line-height:1.4; z-index:200; text-align:center; pointer-events:none; }
+        .ttip:hover::after { display:block; }
+        .result-intro-card { background:linear-gradient(135deg,#4338ca,#6366f1); color:white; border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; }
+        .result-intro-label { font-size:0.75rem; font-weight:700; opacity:0.8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem; }
+        .result-intro-text { font-size:0.92rem; line-height:1.65; }
+
+        /* ===== DROPDOWN NAV ===== */
+        .nav-dropdown { position:relative; }
+        .nav-drop-btn { border:none; cursor:pointer; background:transparent; }
+        .nav-drop-menu { display:none; position:absolute; top:calc(100% + 6px); left:0; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:0.35rem; min-width:220px; box-shadow:0 8px 24px -4px rgba(0,0,0,0.13); z-index:1000; }
+        .nav-drop-menu.open { display:block; }
+        .nav-drop-item { display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.9rem; border-radius:8px; color:var(--text-sub); font-weight:600; font-size:0.88rem; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
+        .nav-drop-item:hover,.nav-drop-item.active { background:var(--primary-light); color:var(--primary); }
+        .nav-drop-sep { height:1px; background:var(--border); margin:0.3rem 0.4rem; }
+
+        /* ===== RESULTS MINI-NAV ===== */
+        .res-nav-wrap { position:sticky; top:56px; z-index:98; background:var(--bg-main); padding:0.55rem 0 0.6rem; margin-bottom:1.25rem; border-bottom:1px solid var(--border); }
+        .res-nav-inner { display:flex; gap:0.4rem; flex-wrap:wrap; }
+        .res-nav-btn { background:var(--card-bg); border:1px solid var(--border); color:var(--text-sub); padding:0.35rem 0.85rem; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.35rem; transition:all 0.15s; white-space:nowrap; }
+        .res-nav-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+        .dep-badge { font-size:0.7rem; color:var(--text-sub); font-weight:600; display:flex; align-items:center; gap:0.25rem; margin-bottom:0.5rem; opacity:0.8; }
+
+        /* ===== TABLEAU DE BORD — ONGLETS INTERNES ===== */
+        .evo-tab-nav { display:flex; gap:0.3rem; flex-wrap:wrap; padding:0.45rem; background:var(--card-bg); border-radius:12px; border:1px solid var(--border); margin-bottom:1.5rem; }
+        .evo-tab-btn { padding:0.42rem 0.9rem; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; border:none; background:transparent; color:var(--text-sub); display:flex; align-items:center; gap:0.4rem; transition:all 0.15s; white-space:nowrap; }
+        .evo-tab-btn:hover { background:var(--primary-light); color:var(--primary); }
+        .evo-tab-btn.active { background:var(--primary); color:white; }
+
+        /* ===== PRÉVISIONS ===== */
+        .pred-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1.25rem; margin-bottom:1.5rem; }
+        .pred-kpi-card { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:1.25rem; }
+        .pred-kpi-name { font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--text-sub); margin-bottom:0.5rem; }
+        .pred-vals { display:flex; gap:0.6rem; }
+        .pred-val-item { flex:1; text-align:center; background:#f8fafc; border-radius:8px; padding:0.55rem 0.3rem; }
+        .pred-val-label { font-size:0.63rem; font-weight:800; text-transform:uppercase; color:var(--text-sub); margin-bottom:0.2rem; }
+        .pred-val-num { font-size:1rem; font-weight:900; color:var(--primary); }
+        .pred-val-delta { font-size:0.68rem; font-weight:700; margin-top:0.1rem; }
+
+        /* ===== BLOCS ANALYSE IA ===== */
+        .ia-block { border-radius:12px; padding:1.1rem 1.25rem; margin-bottom:0.9rem; display:flex; gap:0.9rem; align-items:flex-start; }
+        .ia-block.resume-bl { background:linear-gradient(135deg,#4338ca,#6366f1); color:white; }
+        .ia-block.signal-bl { background:#f0fdf4; border:1px solid #86efac; color:#166534; }
+        .ia-block.alerte-bl { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; }
+        .ia-block.conseil-bl { background:#eff6ff; border:1px solid #93c5fd; color:#1d4ed8; }
+        .ia-block-icon { font-size:1.4rem; flex-shrink:0; line-height:1; }
+        .ia-block-label { font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:0.25rem; opacity:0.75; }
+        .ia-block-text { font-size:0.92rem; line-height:1.6; font-weight:500; }
+
+        /* ===== TABLEAU COMPARAISON ===== */
+        .comp-table { width:100%; border-collapse:collapse; font-size:0.9rem; }
+        .comp-table th { font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-sub); padding:0.5rem 0.75rem; border-bottom:2px solid var(--border); text-align:left; background:#f8fafc; }
+        .comp-table td { padding:0.65rem 0.75rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+        .comp-table tr:last-child td { border-bottom:none; }
+        .comp-table tr:hover td { background:#f8fafc; }
+        .comp-table td:first-child { font-weight:700; }
+        .trend-up { color:var(--success); font-weight:800; }
+        .trend-down { color:var(--danger); font-weight:800; }
+        .trend-flat { color:var(--text-sub); font-weight:700; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="#" class="brand" onclick="goHome(event)">
+            <i class="fa-solid fa-compass" style="font-size:1.35rem"></i> Boussole
+            <span style="font-weight:400;font-size:0.85rem;color:var(--text-sub);margin-left:0.3rem;letter-spacing:0.04em">PME</span>
+        </a>
+        <div class="nav-tabs">
+            <a href="#" class="nav-tab" id="tabHome" onclick="switchTab('home')">
+                <i class="fa-solid fa-house"></i> Accueil
+            </a>
+            <a href="#" class="nav-tab" id="tabAnalyse" onclick="switchTab('analyse')">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Analyser
+            </a>
+            <a href="#" class="nav-tab" id="tabEvolution" onclick="switchTab('evolution')">
+                <i class="fa-solid fa-chart-line"></i> Mon tableau de bord
+            </a>
+            <div class="nav-dropdown">
+                <button class="nav-tab nav-drop-btn" id="tabDropBtn" onclick="toggleDropdown(event)">
+                    <i class="fa-solid fa-ellipsis"></i> Outils <i class="fa-solid fa-chevron-down" style="font-size:0.62rem;margin-left:0.1rem"></i>
+                </button>
+                <div class="nav-drop-menu" id="navDropMenu">
+                    <a href="#" class="nav-drop-item" id="tabBenchmark" onclick="switchTab('benchmark');closeDropdown()">
+                        <i class="fa-solid fa-chart-bar"></i> Comparer au secteur
+                    </a>
+                    <a href="#" class="nav-drop-item" id="tabAlertes" onclick="switchTab('alertes');closeDropdown()">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Alertes & Risques
+                    </a>
+                    <a href="#" class="nav-drop-item" id="tabWhatif" onclick="switchTab('whatif');closeDropdown()">
+                        <i class="fa-solid fa-sliders"></i> Simuler des scénarios
+                    </a>
+                    <div class="nav-drop-sep"></div>
+                    <a href="#" class="nav-drop-item" id="tabSynthese" onclick="switchTab('synthese');closeDropdown()">
+                        <i class="fa-solid fa-file-pdf"></i> Rapport PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="user-menu">
+        <span style="font-size:0.9rem;color:var(--text-sub)">Bonjour, <strong style="color:var(--text-main)">{{ user.email if user else 'Invité' }}</strong></span>
+        <a href="/logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnexion</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- ===== ACCUEIL ===== -->
+    <div id="homeContent">
+        <!-- Hero -->
+        <div style="text-align:center;padding:2.5rem 1rem 1.5rem">
+            <div class="hero-badge"><i class="fa-solid fa-star"></i> Fait pour les PME françaises</div>
+            <h1 style="font-size:2.4rem;font-weight:900;letter-spacing:-0.03em;line-height:1.2;margin:0 0 1rem">
+                Pilotez votre entreprise<br>avec la précision d'un grand groupe
+            </h1>
+            <p style="font-size:1.05rem;color:var(--text-sub);max-width:580px;margin:0 auto 2rem;line-height:1.7">
+                Importez vos données, Boussole les analyse avec des modèles statistiques avancés et vous livre en secondes les causes réelles de vos résultats, les projections et les 3 actions prioritaires.
+            </p>
+            <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem">
+                <button class="btn" style="width:auto;padding:0.85rem 2rem;font-size:1rem" onclick="switchTab('analyse')">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Analyser mes données
+                </button>
+                <button class="btn-outline" style="padding:0.85rem 2rem;font-size:1rem" onclick="switchTab('evolution')">
+                    <i class="fa-solid fa-chart-line"></i> Mon tableau de bord
+                </button>
+            </div>
+        </div>
+
+        <!-- Comment ça marche -->
+        <div class="card" style="margin-bottom:2rem">
+            <div class="section-title" style="justify-content:center;border:none;padding-bottom:0;margin-bottom:1.25rem">
+                <i class="fa-solid fa-circle-question" style="color:var(--primary)"></i> Comment ça marche en 4 étapes
+            </div>
+            <div class="step-row">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-title">Importez</div>
+                    <div class="step-text">Votre fichier Excel ou CSV (ventes, charges, RH…)</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-title">Questionnez</div>
+                    <div class="step-text">Posez votre question business en français</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-title">Comprenez</div>
+                    <div class="step-text">L'IA identifie les vraies causes de vos résultats</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-title">Agissez</div>
+                    <div class="step-text">3 recommandations chiffrées et actionnables</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature cards -->
+        <div class="hub-grid">
+            <div class="hub-card" onclick="switchTab('analyse')">
+                <div class="hub-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <h2>Analyser mes données</h2>
+                <p>Identifiez les vraies causes de vos résultats. 3 modèles statistiques croisés pour une fiabilité maximale.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Démarrer →</button>
+            </div>
+            <div class="hub-card" onclick="switchTab('evolution')">
+                <div class="hub-icon"><i class="fa-solid fa-chart-line"></i></div>
+                <h2>Mon tableau de bord</h2>
+                <p>Suivez la santé de votre entreprise mois après mois avec votre score de A à E et vos indicateurs clés.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Voir →</button>
+            </div>
+            <div class="hub-card" onclick="switchTab('benchmark')">
+                <div class="hub-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                <h2>Me comparer au secteur</h2>
+                <p>Positionnez vos ratios face aux moyennes des PME françaises — INSEE, Banque de France, BPI France.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Comparer →</button>
+            </div>
+            <div class="hub-card" onclick="switchTab('alertes')">
+                <div class="hub-icon" style="color:var(--warning)"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h2>Alertes & Risques</h2>
+                <div class="dep-badge"><i class="fa-solid fa-link"></i> Nécessite Mon tableau de bord</div>
+                <p>Détection automatique des dérives critiques avec une recommandation IA pour chaque signal d'alerte.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Vérifier →</button>
+            </div>
+            <div class="hub-card" onclick="switchTab('whatif')">
+                <div class="hub-icon" style="color:#8b5cf6"><i class="fa-solid fa-sliders"></i></div>
+                <h2>Simuler des scénarios</h2>
+                <div class="dep-badge"><i class="fa-solid fa-link"></i> Nécessite Mon tableau de bord</div>
+                <p>Et si vous augmentiez votre budget pub de 20 % ? Simulez l'impact avant de décider.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Simuler →</button>
+            </div>
+            <div class="hub-card" onclick="switchTab('synthese')">
+                <div class="hub-icon" style="color:var(--danger)"><i class="fa-solid fa-file-pdf"></i></div>
+                <h2>Rapport PDF</h2>
+                <p>Générez un rapport exécutif en un clic pour votre banquier, expert-comptable ou associés.</p>
+                <button class="btn" style="width:auto;padding:0.5rem 1.25rem">Générer →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ONGLET ANALYSE ===== -->
+    <div id="analyseContent" style="display:none">
+        <div class="welcome" style="text-align:left">
+            <h1>Analyser mes données</h1>
+            <p>Importez votre fichier Excel ou CSV et posez votre question en français — Boussole identifie les vraies causes de vos résultats en quelques secondes.</p>
+        </div>
+        <div class="card" id="uploadCard">
+            <form id="analyseForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-cloud-arrow-up"></i> 1. Votre fichier de données (Excel ou CSV)</label>
+                    <input type="file" id="fileInput" name="file" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-bullseye"></i> 2. Votre question business</label>
+                    <input type="text" id="questionInput" name="question" placeholder="Ex : Qu'est-ce qui impacte mes ventes ? Quel est l'effet de mon budget marketing ?" required>
+                </div>
+                <button type="submit" class="btn" id="submitBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Lancer l'analyse →</button>
+            </form>
+            <div class="loading" id="loadingState">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>&nbsp; Analyse en cours — 3 modèles statistiques croisés...
+            </div>
+        </div>
+        <div class="results-section" id="resultsSection">
+            <div id="resultIntroCard"></div>
+            <!-- Mini-nav sticky pour naviguer dans les résultats -->
+            <div class="res-nav-wrap" id="resultsNav">
+                <div class="res-nav-inner">
+                    <button class="res-nav-btn" onclick="scrollToSec('secMetrics')"><i class="fa-solid fa-chart-pie"></i> Chiffres clés</button>
+                    <button class="res-nav-btn" onclick="scrollToSec('secDiag')"><i class="fa-solid fa-magnifying-glass-chart"></i> Diagnostic</button>
+                    <button class="res-nav-btn" onclick="scrollToSec('secAnalyse')"><i class="fa-solid fa-robot"></i> Analyse</button>
+                    <button class="res-nav-btn" onclick="scrollToSec('secPredictif')"><i class="fa-solid fa-chart-line"></i> Projections</button>
+                    <button class="res-nav-btn" onclick="scrollToSec('secRecom')"><i class="fa-solid fa-bolt"></i> 3 Actions</button>
+                    <button class="res-nav-btn" onclick="scrollToSec('secKpis')"><i class="fa-solid fa-gauge-high"></i> Indicateurs</button>
+                </div>
+            </div>
+            <div id="secMetrics">
+                <div class="metrics-grid" id="metricsGrid"></div>
+            </div>
+            <div class="card animate-fade-up" id="secDiag">
+                <div class="section-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--primary)"></i> Pourquoi ces résultats ?</div>
+                <div id="diagContainer"></div>
+            </div>
+            <div class="card animate-fade-up" id="secAnalyse">
+                <div class="section-title"><i class="fa-solid fa-robot" style="color:var(--primary)"></i> Ce que dit l'analyse complète</div>
+                <p id="analyseTexte" style="white-space:pre-line;line-height:1.75;color:var(--text-sub)"></p>
+            </div>
+            <div class="card animate-fade-up" id="secPredictif">
+                <div class="section-title"><i class="fa-solid fa-chart-line" style="color:#8b5cf6"></i> Ce qui va se passer — Projections</div>
+                <div id="predictifContainer"></div>
+            </div>
+            <div class="card animate-fade-up" id="secRecom">
+                <div class="section-title"><i class="fa-solid fa-bolt" style="color:#eab308"></i> Vos 3 actions prioritaires</div>
+                <div id="recomContainer"></div>
+            </div>
+            <div class="card animate-fade-up" id="secKpis">
+                <div class="section-title"><i class="fa-solid fa-gauge-high" style="color:var(--success)"></i> Vos indicateurs clés à surveiller</div>
+                <div id="kpisContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ONGLET — MON TABLEAU DE BORD ===== -->
+    <div id="evolutionContent" style="display:none">
+
+        <div class="welcome" style="text-align:left;margin-bottom:1.5rem">
+            <h1><i class="fa-solid fa-chart-line" style="color:var(--primary);font-size:1.8rem;vertical-align:middle;margin-right:0.5rem"></i> Mon tableau de bord</h1>
+            <p>Enregistrez chaque période et suivez l'évolution de la santé de votre entreprise dans le temps.</p>
+        </div>
+
+        <!-- HERO SCORE -->
+        <div id="evoScoreZone" style="display:none;margin-bottom:1.5rem">
+            <div style="display:grid;grid-template-columns:auto 1fr auto;gap:2rem;align-items:center;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1.5rem 2rem">
+                <div style="text-align:center">
+                    <div id="evoBadgeNote" class="note-badge note-C">C</div>
+                    <div style="font-size:0.72rem;color:var(--text-sub);margin-top:0.4rem;font-weight:700">SANTÉ</div>
+                </div>
+                <div>
+                    <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--text-sub);margin-bottom:0.4rem">Score global</div>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar" id="evoScoreBar" style="width:50%;background:var(--warning)"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-sub);margin-top:0.2rem">
+                        <span>E — Critique</span><span>C — Stable</span><span>A — Excellent</span>
+                    </div>
+                    <div class="score-legend-strip">
+                        <div class="sls-item" style="background:#d1fae5;color:#065f46">A — Excellent</div>
+                        <div class="sls-item" style="background:#dbeafe;color:#1e40af">B — Bon</div>
+                        <div class="sls-item" style="background:#fef9c3;color:#713f12">C — Stable</div>
+                        <div class="sls-item" style="background:#ffedd5;color:#7c2d12">D — Fragile</div>
+                        <div class="sls-item" style="background:#fee2e2;color:#7f1d1d">E — Critique</div>
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-size:0.75rem;color:var(--text-sub);font-weight:700">PÉRIODES</div>
+                    <div id="evoNbPeriodes" style="font-size:2.2rem;font-weight:900;color:var(--primary)">0</div>
+                    <div style="font-size:0.75rem;color:var(--text-sub)">enregistrées</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAVIGATION INTERNE (visible dès qu'il y a des données) -->
+        <div class="evo-tab-nav" id="evoTabNav" style="display:none">
+            <button class="evo-tab-btn active" onclick="switchEvoTab('upload')" data-evo="upload"><i class="fa-solid fa-cloud-arrow-up"></i> Ajouter</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('kpis')" data-evo="kpis"><i class="fa-solid fa-gauge-high"></i> KPIs</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('evolution')" data-evo="evolution"><i class="fa-solid fa-chart-line"></i> Évolution</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('predictions')" data-evo="predictions"><i class="fa-solid fa-forward-fast"></i> Prévisions</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('comparaison')" data-evo="comparaison"><i class="fa-solid fa-scale-balanced"></i> N vs N-1</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('ia')" data-evo="ia"><i class="fa-solid fa-robot"></i> Analyse IA</button>
+            <button class="evo-tab-btn" onclick="switchEvoTab('historique')" data-evo="historique"><i class="fa-solid fa-timeline"></i> Historique</button>
+        </div>
+
+        <!-- ÉTAT VIDE -->
+        <div id="evoEmptyState" class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Aucune période enregistrée</div>
+            <div>Uploadez votre premier fichier pour commencer à suivre l'évolution de votre entreprise.</div>
+        </div>
+
+        <!-- SECTION : UPLOAD -->
+        <div id="evoSec-upload">
+            <div class="card" id="evoUploadCard">
+                <div class="section-title" style="margin-bottom:1rem">
+                    <i class="fa-solid fa-cloud-arrow-up" style="color:var(--primary)"></i>
+                    Ajouter une période
+                </div>
+                <form id="evoForm" enctype="multipart/form-data">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+                        <div>
+                            <label style="font-size:0.9rem"><i class="fa-solid fa-file-csv" style="color:var(--primary)"></i> Fichier CSV ou Excel</label>
+                            <div class="evo-upload-zone" id="evoDropZone" onclick="document.getElementById('evoFileInput').click()">
+                                <div style="font-size:1.8rem;color:var(--text-sub);margin-bottom:0.5rem"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                <div style="font-weight:700;font-size:0.95rem" id="evoFileName">Cliquez ou glissez votre fichier</div>
+                                <div style="font-size:0.82rem;color:var(--text-sub)">CSV ou Excel · max 10 Mo</div>
+                                <input type="file" id="evoFileInput" name="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="onEvoFileSelect(this)">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:0.9rem"><i class="fa-solid fa-calendar" style="color:var(--primary)"></i> Nom de la période</label>
+                            <input type="text" name="label_periode" id="evoPeriodeLabel" placeholder="Ex: Janvier 2025, T1 2025..." style="margin-bottom:0.75rem">
+                            <label style="font-size:0.9rem;margin-top:0.5rem"><i class="fa-solid fa-sliders" style="color:var(--primary)"></i> Indicateurs à suivre</label>
+                            <div id="evoColSelectZone" style="display:none">
+                                <div class="col-selector" id="evoColPills"></div>
+                                <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--text-sub)">
+                                    <i class="fa-solid fa-floppy-disk"></i> Votre sélection est mémorisée
+                                </div>
+                            </div>
+                            <div id="evoColPlaceholder" style="font-size:0.85rem;color:var(--text-sub);padding:0.5rem 0">
+                                Uploadez un fichier pour voir les indicateurs disponibles
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:1rem;align-items:center">
+                        <button type="submit" class="btn-sm" id="evoSubmitBtn" disabled>
+                            <i class="fa-solid fa-rocket"></i> Enregistrer cette période
+                        </button>
+                        <span id="evoFileStatus" style="font-size:0.85rem;color:var(--success)"></span>
+                    </div>
+                </form>
+                <div class="evo-loading" id="evoLoadingState">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem"></i>
+                    <div style="margin-top:0.5rem">Analyse IA + enregistrement en cours...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION : KPIs -->
+        <div id="evoSec-kpis" style="display:none">
+            <div class="card">
+                <div class="section-title">
+                    <i class="fa-solid fa-gauge-high" style="color:var(--primary)"></i>
+                    Vos indicateurs — Dernière période
+                    <span id="evoKpiPeriodeLabel" style="font-size:0.8rem;font-weight:600;color:var(--text-sub);margin-left:0.5rem"></span>
+                </div>
+                <div class="kpi-evo-grid" id="evoKpiCards"></div>
+            </div>
+        </div>
+
+        <!-- SECTION : ÉVOLUTION -->
+        <div id="evoSec-evolution" style="display:none">
+            <div class="chart-full">
+                <div class="section-title" style="font-size:1rem;border:none;padding:0;margin-bottom:1rem">
+                    <i class="fa-solid fa-star" style="color:var(--warning)"></i> Score de santé — toutes les périodes
+                </div>
+                <div style="position:relative;height:200px"><canvas id="evoScoreChart"></canvas></div>
+            </div>
+            <div class="chart-full">
+                <div class="section-title" style="font-size:1rem;border:none;padding:0;margin-bottom:1rem">
+                    <i class="fa-solid fa-chart-area" style="color:var(--primary)"></i> Évolution de vos indicateurs
+                </div>
+                <div style="position:relative;height:260px"><canvas id="evoKpiChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="section-title" style="font-size:1rem;margin-bottom:1rem">
+                    <i class="fa-solid fa-circle-dot" style="color:#8b5cf6"></i> Corrélation entre 2 indicateurs
+                </div>
+                <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem">
+                    <div>
+                        <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.3rem">Axe X</label>
+                        <select id="scatterX" style="padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card-bg);color:var(--text-main);font-size:0.88rem;min-width:160px"></select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.3rem">Axe Y</label>
+                        <select id="scatterY" style="padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card-bg);color:var(--text-main);font-size:0.88rem;min-width:160px"></select>
+                    </div>
+                    <button class="btn-sm" onclick="renderScatter()"><i class="fa-solid fa-circle-dot"></i> Afficher</button>
+                </div>
+                <div style="position:relative;height:220px"><canvas id="evoScatterChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- SECTION : PRÉVISIONS -->
+        <div id="evoSec-predictions" style="display:none">
+            <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#f8fafc,var(--primary-light));border-color:rgba(67,56,202,0.15)">
+                <div style="display:flex;gap:0.6rem;align-items:center">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i>
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--text-sub);line-height:1.5">Prévisions basées sur la régression linéaire de vos périodes passées. Elles indiquent une <strong>tendance</strong>, pas une certitude.</div>
+                </div>
+            </div>
+            <div class="pred-grid" id="evoPredGrid"></div>
+            <div class="chart-full">
+                <div class="section-title" style="font-size:1rem;border:none;padding:0;margin-bottom:1rem">
+                    <i class="fa-solid fa-forward-fast" style="color:var(--primary)"></i> Projection graphique M+1, M+2, M+3
+                </div>
+                <div style="position:relative;height:260px"><canvas id="evoPredChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- SECTION : COMPARAISON N vs N-1 -->
+        <div id="evoSec-comparaison" style="display:none">
+            <div class="card">
+                <div class="section-title">
+                    <i class="fa-solid fa-scale-balanced" style="color:#8b5cf6"></i>
+                    Période actuelle vs précédente
+                </div>
+                <div id="evoComparaisonZone"></div>
+            </div>
+        </div>
+
+        <!-- SECTION : ANALYSE IA -->
+        <div id="evoSec-ia" style="display:none">
+            <div id="evoIaBlocks"></div>
+            <button class="btn-outline" id="evoRefreshIaBtn" style="display:none;margin-top:0.75rem" onclick="refreshIaDisplay()">
+                <i class="fa-solid fa-rotate"></i> Voir l'analyse de la dernière période
+            </button>
+        </div>
+
+        <!-- SECTION : HISTORIQUE -->
+        <div id="evoSec-historique" style="display:none">
+            <div class="card">
+                <div class="section-title">
+                    <i class="fa-solid fa-timeline" style="color:var(--success)"></i>
+                    Historique des périodes
+                </div>
+                <div id="evoHistorique"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== BENCHMARK SECTORIEL ===== -->
+    <div id="benchmarkContent" style="display:none">
+        <div class="welcome" style="text-align:left;margin-bottom:2rem">
+            <h1><i class="fa-solid fa-chart-bar" style="color:var(--primary);font-size:1.8rem;vertical-align:middle;margin-right:0.5rem"></i> Me comparer au secteur</h1>
+            <p>Où vous situez-vous par rapport aux autres PME françaises ? Saisissez vos valeurs pour vous positionner sur chaque indicateur. <span style="font-size:0.85rem;color:var(--text-sub)">Sources : INSEE · Banque de France · BPI France · PME 10-250 salariés</span></p>
+        </div>
+        <div id="benchLoading" style="display:none;text-align:center;padding:4rem;color:var(--primary);font-weight:700">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size:2rem"></i>
+            <div style="margin-top:0.75rem;font-size:1rem">L'IA génère le benchmark sectoriel...</div>
+            <div style="font-size:0.85rem;color:var(--text-sub);margin-top:0.3rem">Sources : INSEE · Banque de France · BPI France</div>
+        </div>
+        <div id="benchMain" style="display:none">
+            <div class="card" style="padding:1rem 1.5rem;margin-bottom:1.5rem">
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+                    <div id="benchSourceInfo" style="flex:1;font-size:0.85rem;font-weight:600;color:var(--text-sub)"></div>
+                    <button class="btn-sm" onclick="chargerBenchmark(true)"><i class="fa-solid fa-rotate"></i> Régénérer</button>
+                </div>
+                <div style="font-size:0.82rem;color:var(--text-sub);margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem">
+                    <i class="fa-solid fa-circle-info"></i> Saisissez vos valeurs dans les champs <strong>Moi :</strong> pour vous positionner par rapport au secteur. Vos saisies sont mémorisées localement.
+                </div>
+            </div>
+            <div class="bench-cat-nav" id="benchCatNav"></div>
+            <div id="benchCatContent"></div>
+        </div>
+    </div>
+
+    <!-- ===== ALERTES & RISQUES ===== -->
+    <div id="alertesContent" style="display:none">
+        <div class="welcome" style="text-align:left;margin-bottom:2rem">
+            <h1><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);font-size:1.8rem;vertical-align:middle;margin-right:0.5rem"></i> Alertes & Risques</h1>
+            <p>Détection automatique des dérives de vos indicateurs. Pour chaque signal, Boussole vous explique le risque et vous donne une recommandation concrète.</p>
+        </div>
+        <div id="alertesLoading" style="display:none;text-align:center;padding:3rem;color:var(--primary);font-weight:700">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem"></i><div style="margin-top:0.5rem">Analyse des seuils en cours...</div>
+        </div>
+        <div id="alertesEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Aucune donnée à surveiller</div>
+            <div style="margin-bottom:1.25rem">Enregistrez au moins 2 périodes dans <strong>Mon tableau de bord</strong> pour activer la surveillance.</div>
+            <button class="btn-sm" onclick="switchTab('evolution')"><i class="fa-solid fa-arrow-right"></i> Aller à Mon tableau de bord</button>
+        </div>
+        <div id="alertesMain" style="display:none">
+            <div class="card" style="margin-bottom:1.5rem">
+                <div style="display:flex;gap:2rem;align-items:center;flex-wrap:wrap">
+                    <div style="text-align:center">
+                        <div id="alertesCritCount" style="font-size:2.5rem;font-weight:900;color:var(--danger)">0</div>
+                        <div style="font-size:0.78rem;font-weight:700;color:var(--text-sub)">CRITIQUE(S)</div>
+                    </div>
+                    <div style="text-align:center">
+                        <div id="alertesWarnCount" style="font-size:2.5rem;font-weight:900;color:var(--warning)">0</div>
+                        <div style="font-size:0.78rem;font-weight:700;color:var(--text-sub)">ATTENTION</div>
+                    </div>
+                    <div style="flex:1;min-width:200px">
+                        <div style="font-size:0.85rem;color:var(--text-sub);line-height:1.6">
+                            Seuils : <strong>Critique</strong> si variation &gt; ±25% · <strong>Attention</strong> si variation &gt; ±15%
+                        </div>
+                        <div id="alertesPeriodeInfo" style="font-size:0.85rem;color:var(--text-sub);margin-top:0.3rem"></div>
+                    </div>
+                    <button class="btn-sm" onclick="chargerAlertes()"><i class="fa-solid fa-rotate"></i> Rafraîchir</button>
+                </div>
+            </div>
+            <div id="alertesList"></div>
+        </div>
+    </div>
+
+    <!-- ===== WHAT-IF ===== -->
+    <div id="whatifContent" style="display:none">
+        <div class="welcome" style="text-align:left;margin-bottom:2rem">
+            <h1><i class="fa-solid fa-sliders" style="color:var(--primary);font-size:1.8rem;vertical-align:middle;margin-right:0.5rem"></i> Simuler des scénarios</h1>
+            <p>Et si vous augmentiez votre budget pub de 20 % ? Déplacez les curseurs et voyez immédiatement l'impact sur le score de santé de votre entreprise.</p>
+        </div>
+        <div id="whatifLoading" style="display:none;text-align:center;padding:3rem;color:var(--primary);font-weight:700">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem"></i><div style="margin-top:0.5rem">Chargement des données...</div>
+        </div>
+        <div id="whatifEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon"><i class="fa-solid fa-sliders"></i></div>
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Aucune donnée disponible</div>
+            <div style="margin-bottom:1.25rem">Commencez par enregistrer une période dans <strong>Mon tableau de bord</strong> — le simulateur utilisera ces données.</div>
+            <button class="btn-sm" onclick="switchTab('evolution')"><i class="fa-solid fa-arrow-right"></i> Aller à Mon tableau de bord</button>
+        </div>
+        <div id="whatifMain" style="display:none">
+            <div class="card">
+                <div class="section-title" style="font-size:1rem;margin-bottom:0.5rem">
+                    <i class="fa-solid fa-sliders" style="color:var(--primary)"></i>
+                    Ajustements des variables <span id="whatifPeriodeRef" style="font-size:0.82rem;font-weight:600;color:var(--text-sub)"></span>
+                </div>
+                <div id="whatifModelInfo" style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;padding:0.6rem 1rem;background:#f8fafc;border-radius:8px;border:1px solid var(--border)"></div>
+                <p style="color:var(--text-sub);font-size:0.9rem;margin:0 0 1.5rem 0">Déplacez les curseurs (−50 % à +50 %). Les variables sont triées par ordre d'influence sur votre score — celles du haut ont le plus d'impact. Cliquez sur <strong>Recalculer</strong> pour voir l'effet.</p>
+                <div id="whatifSliders"></div>
+                <div style="display:flex;gap:1rem;margin-top:1.25rem;align-items:center;flex-wrap:wrap">
+                    <button class="btn-sm" onclick="simulerWhatif()" id="whatifBtn">
+                        <i class="fa-solid fa-calculator"></i> Recalculer le scénario
+                    </button>
+                    <button class="btn-outline" onclick="resetSliders()">
+                        <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+                    </button>
+                    <span id="whatifCalcLoading" style="display:none;color:var(--primary);font-size:0.9rem;font-weight:700">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Calcul IA en cours...
+                    </span>
+                </div>
+            </div>
+            <div class="whatif-result-box" id="whatifResultBox">
+                <div class="section-title" style="font-size:1rem;margin-bottom:1rem;border:none;padding:0">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary)"></i> Résultat de la simulation
+                </div>
+                <div class="whatif-score-row">
+                    <div style="text-align:center">
+                        <div id="whatifNoteBase" class="whatif-note-badge note-C" style="margin:0 auto 0.3rem">—</div>
+                        <div style="font-size:0.72rem;color:var(--text-sub);font-weight:700">ACTUEL</div>
+                    </div>
+                    <div style="font-size:1.8rem;color:var(--text-sub)">→</div>
+                    <div style="text-align:center">
+                        <div id="whatifNoteSim" class="whatif-note-badge note-C" style="margin:0 auto 0.3rem">—</div>
+                        <div style="font-size:0.72rem;color:var(--text-sub);font-weight:700">SIMULÉ</div>
+                    </div>
+                    <div style="flex:1">
+                        <div style="font-size:0.8rem;font-weight:700;color:var(--text-sub);margin-bottom:0.2rem">Impact simulé</div>
+                        <div id="whatifScoreDelta" style="font-size:1.3rem;font-weight:900"></div>
+                        <div id="whatifImpactPrincipal" style="font-size:0.88rem;color:var(--text-sub);margin-top:0.2rem"></div>
+                    </div>
+                </div>
+                <div id="whatifAnalyseText" style="font-size:0.95rem;line-height:1.6;color:var(--text-main);padding:1rem;background:var(--card-bg);border-radius:8px;margin:0.75rem 0"></div>
+                <div id="whatifRecoText" style="font-size:0.9rem;font-weight:700;color:var(--primary)"></div>
+                <div class="whatif-kpi-grid" id="whatifKpiCompar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SYNTHÈSE EXÉCUTIVE PDF ===== -->
+    <div id="syntheseContent" style="display:none">
+        <div class="welcome" style="text-align:left;margin-bottom:2rem">
+            <h1><i class="fa-solid fa-file-pdf" style="color:var(--danger);font-size:1.8rem;vertical-align:middle;margin-right:0.5rem"></i> Rapport PDF</h1>
+            <p>Générez en un clic un rapport exécutif propre et structuré — prêt à partager avec votre banquier, expert-comptable ou vos associés.</p>
+        </div>
+        <div class="card">
+            <div class="section-title" style="font-size:1rem;margin-bottom:1rem">
+                <i class="fa-solid fa-database" style="color:var(--primary)"></i> Données incluses dans le rapport
+            </div>
+            <div id="syntheseDataInfo" style="color:var(--text-sub);font-size:0.95rem;margin-bottom:0.5rem">Chargement...</div>
+            <div id="syntheseKpiList" style="margin-bottom:1.5rem"></div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i> Notes ou commentaires à ajouter (optionnel)</label>
+                <textarea id="syntheseNotes" rows="4" style="width:100%;padding:0.85rem;border:1px solid var(--border);border-radius:10px;font-size:0.95rem;resize:vertical;color:var(--text-main);background:var(--card-bg)" placeholder="Ajoutez vos observations, contexte ou notes supplémentaires..."></textarea>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                <button class="btn" id="synthesePdfBtn" onclick="exporterPDF()" style="max-width:280px">
+                    <i class="fa-solid fa-download"></i> Générer et télécharger le PDF
+                </button>
+                <span id="synthesePdfLoading" style="display:none;color:var(--primary);font-weight:700;font-size:0.9rem">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Génération en cours...
+                </span>
+                <span id="synthesePdfSuccess" style="display:none;color:var(--success);font-weight:700;font-size:0.9rem">
+                    <i class="fa-solid fa-circle-check"></i> PDF téléchargé avec succès !
+                </span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- BARRE DE CHAT -->
+<div class="chat-input-container" id="chatBar">
+    <div class="chat-inner">
+        <div class="chat-loading" id="chatLoading">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>&nbsp; Analyse en cours...
+        </div>
+        <form id="chatForm" class="chat-row">
+            <input type="text" id="chatQuestionInput" placeholder="Pose une question de suivi sur cette analyse...">
+            <button type="submit" class="btn" id="chatSubmitBtn" style="width:auto">
+                <i class="fa-solid fa-paper-plane"></i> Poser
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+document.addEventListener("DOMContentLoaded", function() {
+    switchTab('home');
+    chargerHistorique();
+});
+
+function goHome(e) { e.preventDefault(); switchTab('home'); }
+
+function switchTab(tabName) {
+    const contents = {
+        home: 'homeContent', analyse: 'analyseContent', evolution: 'evolutionContent',
+        benchmark: 'benchmarkContent', alertes: 'alertesContent',
+        whatif: 'whatifContent', synthese: 'syntheseContent'
+    };
+    const tabs = {
+        home: 'tabHome', analyse: 'tabAnalyse', evolution: 'tabEvolution',
+        benchmark: 'tabBenchmark', alertes: 'tabAlertes',
+        whatif: 'tabWhatif', synthese: 'tabSynthese'
+    };
+    Object.keys(contents).forEach(k => {
+        document.getElementById(contents[k]).style.display = 'none';
+        document.getElementById(tabs[k]).classList.remove('active');
+    });
+    document.getElementById(contents[tabName]).style.display = 'block';
+    document.getElementById(tabs[tabName]).classList.add('active');
+    // Dropdown button active state
+    const dropdownKeys = ['benchmark','alertes','whatif','synthese'];
+    const dropBtn = document.getElementById('tabDropBtn');
+    if(dropBtn) dropBtn.classList.toggle('active', dropdownKeys.includes(tabName));
+    const chatBar = document.getElementById('chatBar');
+    const resultsSection = document.getElementById('resultsSection');
+    chatBar.style.display = (tabName === 'analyse' && resultsSection && resultsSection.style.display === 'block') ? 'block' : 'none';
+    if (tabName === 'benchmark') chargerBenchmark();
+    if (tabName === 'alertes') chargerAlertes();
+    if (tabName === 'whatif') chargerWhatif();
+    if (tabName === 'synthese') chargerSynthese();
+}
+
+// ============================================================
+// DROPDOWN OUTILS
+// ============================================================
+function toggleDropdown(e) {
+    e.preventDefault(); e.stopPropagation();
+    document.getElementById('navDropMenu').classList.toggle('open');
+}
+function closeDropdown() {
+    const m = document.getElementById('navDropMenu');
+    if(m) m.classList.remove('open');
+}
+document.addEventListener('click', closeDropdown);
+
+// ============================================================
+// SCROLL VERS SECTION RÉSULTATS
+// ============================================================
+function scrollToSec(id) {
+    const el = document.getElementById(id);
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ============================================================
+// COULEUR DE FOND
+// ============================================================
+function adjustTextContrast(hex) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+    const root = document.documentElement;
+    if(lum < 0.5) {
+        root.style.setProperty('--bg-main', hex);
+        root.style.setProperty('--card-bg', '#1e293b');
+        root.style.setProperty('--text-main', '#f8fafc');
+        root.style.setProperty('--text-sub', '#94a3b8');
+        root.style.setProperty('--border', '#334155');
+    } else {
+        root.style.setProperty('--bg-main', hex);
+        root.style.setProperty('--card-bg', '#ffffff');
+        root.style.setProperty('--text-main', '#1e293b');
+        root.style.setProperty('--text-sub', '#64748b');
+        root.style.setProperty('--border', '#cbd5e1');
+    }
+}
+const savedColor = localStorage.getItem('dashboardBg');
+if(savedColor) adjustTextContrast(savedColor);
+else adjustTextContrast('#f4f6f9');
+
+// ============================================================
+// ANALYSEUR ÉCONOMÉTRIQUE (inchangé)
+// ============================================================
+const METRIC_FRIENDLY = {
+    'r²':'Fiabilité du modèle','r2':'Fiabilité du modèle',
+    'r² mco':'Fiabilité MCO','r2 mco':'Fiabilité MCO',
+    'r² rf':'Fiabilité Random Forest','r2 rf':'Fiabilité Random Forest',
+    'r² global':'Fiabilité globale','r2 global':'Fiabilité globale',
+    'mape':'Précision prédictive','mae':'Erreur de prédiction',
+    'rmse':'Écart type erreur','p-value':'Niveau de confiance',
+    'p value':'Niveau de confiance','observations':'Données analysées',
+    'n observations':'Données analysées','lignes':'Données analysées',
+    'colonnes':'Variables analysées','variables':'Variables analysées',
+    'score':'Score de santé','score santé':'Score de santé'
+};
+function renderMetricCard(m) {
+    const rawKey = m.label.toLowerCase().replace(/[()]/g,'').trim();
+    const friendly = METRIC_FRIENDLY[rawKey] || m.label;
+    const numVal = parseFloat(String(m.value).replace(',','.').replace('%','').trim());
+    const looksLikeRatio = !isNaN(numVal) && numVal >= 0 && numVal <= 1 &&
+        (rawKey.includes('r²') || rawKey.includes('r2') || rawKey.includes('p-value') || rawKey.includes('p value'));
+    const looksLikePct = !isNaN(numVal) && String(m.value).includes('%');
+    if(looksLikeRatio || looksLikePct) {
+        const pct = looksLikeRatio ? Math.round(numVal*100) : Math.round(numVal);
+        const barColor = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)';
+        return `<div class="metric-card">
+            <div class="metric-label">${friendly}</div>
+            <div class="metric-value" style="font-size:1.75rem">${pct}%</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
+            <div class="metric-sub">${m.sub||''}</div>
+        </div>`;
+    }
+    return `<div class="metric-card">
+        <div class="metric-label">${friendly}</div>
+        <div class="metric-value">${m.value}</div>
+        <div class="metric-sub">${m.sub||''}</div>
+    </div>`;
+}
+
+function afficherResultats(r) {
+    /* Intro card */
+    const intro = document.getElementById('resultIntroCard');
+    if(intro) {
+        const hasAnalyse = r.analyse && r.analyse.length > 20;
+        const snippet = hasAnalyse ? r.analyse.substring(0, 160) + (r.analyse.length > 160 ? '…' : '') : '';
+        intro.innerHTML = snippet ? `<div class="result-intro-card">
+            <div class="result-intro-label"><i class="fa-solid fa-circle-check"></i> Analyse terminée</div>
+            <div class="result-intro-text">${snippet}</div>
+        </div>` : '';
+    }
+    if(r.metrics) {
+        document.getElementById('metricsGrid').innerHTML = r.metrics.map(renderMetricCard).join('');
+    }
+    if(r.analyse) document.getElementById('analyseTexte').innerText = r.analyse;
+    if(r.diagnostic) {
+        let html = '';
+        (r.diagnostic.tendances || []).forEach(t => {
+            const color = t.impact && t.impact.includes('+') ? 'var(--success)' : 'var(--danger)';
+            html += `<div class="tendance-row">
+                <span class="tendance-impact" style="color:${color}">${t.impact}</span>
+                <div><div style="font-weight:700">${t.facteur}</div>
+                <div style="font-size:0.9rem;color:var(--text-sub)">${t.description}</div></div>
+            </div>`;
+        });
+        if(r.diagnostic.anomalie) html += `<div class="info-box"><div class="info-box-title">⚠️ Anomalie détectée</div><div class="info-box-text">${r.diagnostic.anomalie}</div></div>`;
+        if(r.diagnostic.correlation) html += `<div class="info-box"><div class="info-box-title">🔗 Corrélation causale</div><div class="info-box-text">${r.diagnostic.correlation}</div></div>`;
+        document.getElementById('diagContainer').innerHTML = html;
+    }
+    if(r.predictif) {
+        document.getElementById('predictifContainer').innerHTML = `
+            <div class="predictif-grid">
+                <div class="predictif-box"><div class="predictif-label">PROJECTION 3 MOIS</div><div class="predictif-value">${r.predictif.projection||'N/A'}</div></div>
+                <div class="predictif-box"><div class="predictif-label">PROBABILITÉ OBJECTIF</div><div class="predictif-value" style="color:var(--success)">${r.predictif.probabilite_objectif||'N/A'}</div></div>
+            </div>
+            <div class="scenario-box" style="background:#d1fae5"><div class="scenario-title" style="color:#065f46">✅ Scénario optimiste</div><div style="color:#065f46">${r.predictif.scenario_optimiste||''}</div></div>
+            <div class="scenario-box" style="background:#fee2e2"><div class="scenario-title" style="color:#991b1b">⚠️ Scénario pessimiste</div><div style="color:#991b1b">${r.predictif.scenario_pessimiste||''}</div></div>`;
+    }
+    if(r.recommandations) {
+        const colors = ['var(--danger)','var(--warning)','var(--primary)'];
+        const bgs = ['#ef4444','#f59e0b','#4338ca'];
+        document.getElementById('recomContainer').innerHTML = r.recommandations.map((rec,i) => `
+            <div class="reco-card" style="border-left-color:${colors[i]}">
+                <div class="reco-header"><span class="reco-num" style="background:${bgs[i]}">${rec.priorite||i+1}</span><div class="reco-action">${rec.action}</div></div>
+                <div class="reco-detail">${rec.detail}</div>
+            </div>`).join('');
+    }
+    if(r.kpis) {
+        document.getElementById('kpisContainer').innerHTML = `<div class="kpi-grid">${r.kpis.map(k=>`
+            <div class="kpi-box ${k.statut==='alerte'?'alerte':''}">
+                <div class="kpi-nom">${k.nom}</div>
+                <div class="kpi-valeur">${k.valeur_actuelle}</div>
+                <div class="kpi-cible">Cible : <strong>${k.valeur_cible}</strong></div>
+                <div class="kpi-statut" style="color:${k.statut==='alerte'?'var(--danger)':'var(--success)'}">
+                    ${k.statut==='alerte'?'⚠️ ALERTE':'✅ Normal'}</div>
+            </div>`).join('')}</div>`;
+    }
+    if(r.synthese_finale) {
+        let syntheseSection = document.getElementById('syntheseSection');
+        if(!syntheseSection) {
+            syntheseSection = document.createElement('div');
+            syntheseSection.id = 'syntheseSection';
+            syntheseSection.className = 'card animate-fade-up';
+            document.getElementById('resultsSection').appendChild(syntheseSection);
+        }
+        syntheseSection.innerHTML = `
+            <div class="section-title"><i class="fa-solid fa-clipboard-check" style="color:var(--primary)"></i> Réponse à votre question</div>
+            <div style="white-space:pre-line;line-height:1.75;color:var(--text-main)">
+                ${r.synthese_finale}
+            </div>
+        `;
+    }
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('resultsNav').style.display = 'block';
+    document.getElementById('chatBar').style.display = 'block';
+    document.getElementById('resultIntroCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('analyseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    fetch('/analyse', { method: 'POST', body: new FormData(this) })
+    .then(r => r.json()).then(data => {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        if(data.success) afficherResultats(data.result);
+        else alert('Erreur : ' + data.error);
+    }).catch(() => {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        alert('Erreur de connexion.');
+    });
+});
+
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const q = document.getElementById('chatQuestionInput').value.trim();
+    if(!q) return;
+    const btn = document.getElementById('chatSubmitBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+    document.getElementById('chatLoading').style.display = 'block';
+    document.getElementById('chatQuestionInput').value = '';
+    const fd = new FormData(); fd.append('question', q);
+    fetch('/analyse', { method: 'POST', body: fd })
+    .then(r => r.json()).then(data => {
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Poser';
+        document.getElementById('chatLoading').style.display = 'none';
+        if(data.success) afficherResultats(data.result);
+        else alert('Erreur : ' + data.error);
+    }).catch(() => {
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Poser';
+        document.getElementById('chatLoading').style.display = 'none';
+        alert('Erreur de connexion.');
+    });
+});
+
+// ============================================================
+// ÉVOLUTION & PILOTAGE
+// ============================================================
+let evoSelectedCols = [];
+let evoCharts = {};
+const PALETTE = ['#4338ca','#10b981','#f59e0b','#ef4444','#06b6d4','#8b5cf6'];
+
+function noteColor(note) {
+    const map = { A:'#10b981', B:'#22c55e', C:'#f59e0b', D:'#f97316', E:'#ef4444' };
+    return map[note] || '#94a3b8';
+}
+function noteBg(note) {
+    const map = { A:'#d1fae5', B:'#dcfce7', C:'#fef3c7', D:'#ffedd5', E:'#fee2e2' };
+    return map[note] || '#f1f5f9';
+}
+function formatNum(v) {
+    if(v == null) return '—';
+    if(Math.abs(v) >= 1000000) return (v/1000000).toFixed(2) + ' M';
+    if(Math.abs(v) >= 1000) return v.toLocaleString('fr-FR', {maximumFractionDigits:1});
+    return parseFloat(v.toFixed(2)).toString();
+}
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+function destroyChart(key) {
+    if(evoCharts[key]) { try { evoCharts[key].destroy(); } catch(e){} delete evoCharts[key]; }
+}
+
+// Drag & drop
+const dropZone = document.getElementById('evoDropZone');
+dropZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault(); this.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if(f) { document.getElementById('evoFileInput').files = e.dataTransfer.files; onEvoFileSelect({files:[f]}); }
+});
+
+function onEvoFileSelect(input) {
+    const f = input.files ? input.files[0] : null;
+    if(!f) return;
+    document.getElementById('evoFileName').textContent = f.name;
+    document.getElementById('evoFileStatus').textContent = 'Fichier chargé — sélectionnez vos KPIs';
+    document.getElementById('evoSubmitBtn').disabled = false;
+
+    const fd = new FormData();
+    fd.append('file', f);
+    fetch('/evolution_preview', { method: 'POST', body: fd })
+    .then(r => r.json()).then(data => {
+        if(!data.success) return;
+        const kpisExistants = data.kpis_existants || [];
+        evoSelectedCols = kpisExistants.length > 0 ? [...kpisExistants] : data.numeric_cols.slice(0, 4);
+        renderColPills(data.numeric_cols, evoSelectedCols);
+        document.getElementById('evoColSelectZone').style.display = 'block';
+        document.getElementById('evoColPlaceholder').style.display = 'none';
+        if(kpisExistants.length > 0) {
+            document.getElementById('evoFileStatus').textContent = kpisExistants.length + ' KPIs mémorisés rechargés ✓';
+        }
+    }).catch(() => {});
+}
+
+function renderColPills(numericCols, selectedCols) {
+    const container = document.getElementById('evoColPills');
+    container.innerHTML = '';
+    numericCols.forEach(col => {
+        const pill = document.createElement('span');
+        pill.className = 'col-pill' + (selectedCols.includes(col) ? ' selected' : '');
+        pill.textContent = col;
+        pill.onclick = function() {
+            if(evoSelectedCols.includes(col)) {
+                evoSelectedCols = evoSelectedCols.filter(c => c !== col);
+                pill.classList.remove('selected');
+            } else {
+                evoSelectedCols.push(col);
+                pill.classList.add('selected');
+            }
+        };
+        container.appendChild(pill);
+    });
+}
+
+// ============================================================
+// MON TABLEAU DE BORD — ÉVOLUTION
+// ============================================================
+let evoDonnees = { historique: [], averages: {}, predictions: {}, kpis_suivi: [] };
+
+function switchEvoTab(name) {
+    ['upload','kpis','evolution','predictions','comparaison','ia','historique'].forEach(t => {
+        const el = document.getElementById('evoSec-' + t);
+        if(el) el.style.display = 'none';
+    });
+    const target = document.getElementById('evoSec-' + name);
+    if(target) target.style.display = 'block';
+    document.querySelectorAll('.evo-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.evo === name));
+}
+
+function chargerHistorique() {
+    fetch('/evolution_data')
+    .then(r => r.json()).then(data => {
+        if(data.success && data.historique && data.historique.length > 0) {
+            evoDonnees = data;
+            renderEvoDashboard(data);
+        }
+    }).catch(() => {});
+}
+
+function renderEvoDashboard(data) {
+    const hist = data.historique || [];
+    if(!hist.length) {
+        document.getElementById('evoEmptyState').style.display = 'block';
+        document.getElementById('evoTabNav').style.display = 'none';
+        return;
+    }
+    document.getElementById('evoEmptyState').style.display = 'none';
+    document.getElementById('evoTabNav').style.display = 'flex';
+    const derniere = hist[hist.length - 1];
+    afficherScore(derniere.note, derniere.score, hist.length);
+    renderKpiCards(hist, data.averages || {});
+    renderEvolutionCharts(hist);
+    renderPredictions(hist, data.predictions || {});
+    renderComparaison(hist);
+    renderIaBlocks(derniere);
+    renderHistorique(hist);
+    const lbl = document.getElementById('evoKpiPeriodeLabel');
+    if(lbl) lbl.textContent = '— ' + derniere.label;
+}
+
+function afficherScore(note, score, nbPeriodes) {
+    document.getElementById('evoScoreZone').style.display = 'block';
+    const badge = document.getElementById('evoBadgeNote');
+    badge.textContent = note;
+    badge.className = 'note-badge note-' + note;
+    const bar = document.getElementById('evoScoreBar');
+    bar.style.width = score + '%';
+    bar.style.background = noteColor(note);
+    document.getElementById('evoNbPeriodes').textContent = nbPeriodes || 0;
+}
+
+/* ── KPI CARDS ── */
+function renderKpiCards(hist, averages) {
+    const derniere = hist[hist.length - 1];
+    const precedente = hist.length >= 2 ? hist[hist.length - 2] : null;
+    const kpisActuels = derniere.valeurs || {};
+    const kpisPrecedents = precedente ? (precedente.valeurs || {}) : {};
+    let html = '';
+    Object.entries(kpisActuels).forEach(([nom, val]) => {
+        let deltaHtml = '<span class="kpi-evo-delta flat">— première période</span>';
+        if(kpisPrecedents[nom] !== undefined && kpisPrecedents[nom] !== 0) {
+            const delta = val - kpisPrecedents[nom];
+            const deltaPct = (delta / Math.abs(kpisPrecedents[nom]) * 100).toFixed(1);
+            const cls = delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat');
+            const arrow = delta > 0 ? '▲' : (delta < 0 ? '▼' : '—');
+            deltaHtml = `<div class="kpi-evo-delta ${cls}">${arrow} ${parseFloat(deltaPct) > 0 ? '+' : ''}${deltaPct}% vs préc.</div>`;
+        }
+        const avg = averages[nom] !== undefined
+            ? `<div style="font-size:0.73rem;color:var(--text-sub);margin-top:0.2rem">Moy. toutes périodes : ${formatNum(averages[nom])}</div>`
+            : '';
+        html += `<div class="kpi-evo-card">
+            <div class="kpi-evo-label">${nom}</div>
+            <div class="kpi-evo-val">${formatNum(val)}</div>
+            ${deltaHtml}${avg}
+        </div>`;
+    });
+    document.getElementById('evoKpiCards').innerHTML = html;
+}
+
+/* ── CHARTS ÉVOLUTION ── */
+function renderEvolutionCharts(hist) {
+    const labels = hist.map(p => p.label);
+    destroyChart('score');
+    evoCharts['score'] = new Chart(document.getElementById('evoScoreChart').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [{
+            label: 'Score', data: hist.map(p => p.score),
+            borderColor: '#4338ca', backgroundColor: hexToRgba('#4338ca', 0.08),
+            borderWidth: 3, fill: true, tension: 0.35,
+            pointBackgroundColor: hist.map(p => noteColor(p.note)), pointRadius: 6, pointHoverRadius: 8
+        }]},
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Score ${ctx.parsed.y}/100 — Note ${hist[ctx.dataIndex].note}` } } },
+            scales: { y: { min:0, max:100, ticks: { callback: v => v+'/100' }, grid:{ color:'rgba(0,0,0,0.05)' } }, x: { grid:{ display:false } } }
+        }
+    });
+    destroyChart('kpis');
+    const tousKpis = [...new Set(hist.flatMap(p => Object.keys(p.valeurs)))];
+    evoCharts['kpis'] = new Chart(document.getElementById('evoKpiChart').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: tousKpis.map((kpi,i) => ({
+            label: kpi, data: hist.map(p => p.valeurs[kpi] ?? null),
+            borderColor: PALETTE[i % PALETTE.length], backgroundColor: hexToRgba(PALETTE[i % PALETTE.length], 0.07),
+            borderWidth: 2.5, fill: true, tension: 0.35, pointRadius: 4, pointHoverRadius: 6
+        }))},
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'bottom' } },
+            scales: { x:{ grid:{display:false} }, y:{ grid:{color:'rgba(0,0,0,0.05)'} } }
+        }
+    });
+    const kpis = tousKpis;
+    const sx = document.getElementById('scatterX'), sy = document.getElementById('scatterY');
+    if(sx && sy) {
+        const opts = kpis.map((k,i) => `<option value="${k}" ${i===0?'selected':''}>${k}</option>`).join('');
+        const opts2 = kpis.map((k,i) => `<option value="${k}" ${i===1?'selected':''}>${k}</option>`).join('');
+        sx.innerHTML = opts; sy.innerHTML = opts2;
+    }
+}
+
+function renderScatter() {
+    const xKey = document.getElementById('scatterX').value;
+    const yKey = document.getElementById('scatterY').value;
+    const hist = evoDonnees.historique || [];
+    const pts = hist.filter(p => p.valeurs[xKey]!=null && p.valeurs[yKey]!=null)
+                    .map(p => ({ x: p.valeurs[xKey], y: p.valeurs[yKey], label: p.label }));
+    destroyChart('scatter');
+    evoCharts['scatter'] = new Chart(document.getElementById('evoScatterChart').getContext('2d'), {
+        type: 'scatter',
+        data: { datasets: [{ label: `${xKey} vs ${yKey}`, data: pts,
+            backgroundColor: hexToRgba('#4338ca', 0.7), borderColor: '#4338ca', pointRadius: 7, pointHoverRadius: 9 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: ctx => `${ctx.raw.label}: (${ctx.raw.x}, ${ctx.raw.y})` } } },
+            scales: { x:{ title:{display:true,text:xKey} }, y:{ title:{display:true,text:yKey} } }
+        }
+    });
+}
+
+/* ── PRÉVISIONS ── */
+function linReg(xs, ys) {
+    const n = xs.length, mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+    const slope = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0) / (xs.reduce((s,x)=>s+(x-mx)**2,0)||1);
+    return { slope, intercept: my - slope * mx };
+}
+
+function renderPredictions(hist, serverPreds) {
+    const predGrid = document.getElementById('evoPredGrid');
+    if(hist.length < 2) {
+        predGrid.innerHTML = '<div style="color:var(--text-sub);padding:1rem">Enregistrez au moins 2 périodes pour voir les prévisions.</div>';
+        return;
+    }
+    const kpis = Object.keys(hist[hist.length-1].valeurs);
+    const preds = {};
+    kpis.forEach(kpi => {
+        if(serverPreds[kpi]) { preds[kpi] = serverPreds[kpi]; return; }
+        const pts = hist.map((p,i) => [i, p.valeurs[kpi]]).filter(([,v]) => v != null);
+        if(pts.length >= 2) {
+            const r = linReg(pts.map(p=>p[0]), pts.map(p=>p[1])), n = hist.length;
+            preds[kpi] = { m1: +(r.slope*n+r.intercept).toFixed(2), m2: +(r.slope*(n+1)+r.intercept).toFixed(2), m3: +(r.slope*(n+2)+r.intercept).toFixed(2) };
+        }
+    });
+    predGrid.innerHTML = kpis.filter(k => preds[k]).map(kpi => {
+        const p = preds[kpi], cur = hist[hist.length-1].valeurs[kpi];
+        const d1 = cur ? ((p.m1-cur)/Math.abs(cur)*100).toFixed(1) : null;
+        const dColor = d1 === null ? '' : (parseFloat(d1) >= 0 ? 'color:var(--success)' : 'color:var(--danger)');
+        const dTxt = d1 !== null ? `<div class="pred-val-delta" style="${dColor}">${parseFloat(d1)>=0?'+':''}${d1}%</div>` : '';
+        return `<div class="pred-kpi-card">
+            <div class="pred-kpi-name">${kpi}</div>
+            <div style="font-size:0.73rem;color:var(--text-sub);margin-bottom:0.5rem">Actuel : <strong>${formatNum(cur)}</strong></div>
+            <div class="pred-vals">
+                <div class="pred-val-item"><div class="pred-val-label">M+1</div><div class="pred-val-num">${formatNum(p.m1)}</div>${dTxt}</div>
+                <div class="pred-val-item"><div class="pred-val-label">M+2</div><div class="pred-val-num">${formatNum(p.m2)}</div></div>
+                <div class="pred-val-item"><div class="pred-val-label">M+3</div><div class="pred-val-num">${formatNum(p.m3)}</div></div>
+            </div>
+        </div>`;
+    }).join('') || '<div style="color:var(--text-sub);padding:0.5rem">Pas assez de données.</div>';
+
+    // Prediction chart
+    destroyChart('pred');
+    const histLabels = hist.map(p => p.label);
+    const allLabels = [...histLabels, 'M+1', 'M+2', 'M+3'];
+    const datasets = kpis.filter(k=>preds[k]).slice(0,4).flatMap((kpi,i) => {
+        const hv = hist.map(p => p.valeurs[kpi] ?? null), color = PALETTE[i % PALETTE.length];
+        const bridge = hv[hv.length-1];
+        return [
+            { label: kpi, data: [...hv, null, null, null], borderColor: color, backgroundColor:'transparent', borderWidth:2.5, tension:0.35, pointRadius:4 },
+            { label: kpi+' (prév.)', data: [...hv.map(()=>null), bridge, preds[kpi].m1, preds[kpi].m2, preds[kpi].m3],
+              borderColor: color, backgroundColor:'transparent', borderWidth:2, borderDash:[6,4], tension:0.35, pointRadius:5, pointStyle:'triangle' }
+        ];
+    });
+    evoCharts['pred'] = new Chart(document.getElementById('evoPredChart').getContext('2d'), {
+        type: 'line', data: { labels: allLabels, datasets },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'bottom' } },
+            scales: { x:{grid:{display:false}}, y:{grid:{color:'rgba(0,0,0,0.05)'}} }
+        }
+    });
+}
+
+/* ── COMPARAISON N vs N-1 ── */
+function renderComparaison(hist) {
+    const zone = document.getElementById('evoComparaisonZone');
+    if(hist.length < 2) {
+        zone.innerHTML = '<div style="color:var(--text-sub);text-align:center;padding:2rem">Enregistrez au moins 2 périodes pour voir la comparaison.</div>';
+        return;
+    }
+    const actuel = hist[hist.length-1].valeurs, precedent = hist[hist.length-2].valeurs;
+    const rows = Object.keys(actuel).filter(k => precedent[k] != null && precedent[k] !== 0).map(kpi => {
+        const delta = actuel[kpi] - precedent[kpi];
+        const pct = (delta / Math.abs(precedent[kpi]) * 100).toFixed(1);
+        const cls = delta > 0 ? 'trend-up' : (delta < 0 ? 'trend-down' : 'trend-flat');
+        const arrow = delta > 0 ? '▲' : (delta < 0 ? '▼' : '—');
+        return `<tr><td>${kpi}</td><td>${formatNum(precedent[kpi])}</td><td>${formatNum(actuel[kpi])}</td>
+            <td class="${cls}">${arrow} ${formatNum(Math.abs(delta))}</td>
+            <td class="${cls}">${parseFloat(pct)>=0?'+':''}${pct}%</td></tr>`;
+    }).join('');
+    zone.innerHTML = `<table class="comp-table">
+        <thead><tr><th>Indicateur</th><th>${hist[hist.length-2].label}</th><th>${hist[hist.length-1].label}</th><th>Variation</th><th>En %</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ── ANALYSE IA ── */
+function parseIa(raw) {
+    try { const p = JSON.parse(raw||'{}'); if(p.resume) return p; } catch(e) {}
+    return { resume: raw || '', signal_fort: null, alerte: null, conseil: null };
+}
+function renderIaBlocks(periode) {
+    const ia = parseIa(periode.resume_ia);
+    let html = '';
+    if(ia.resume) html += `<div class="ia-block resume-bl"><div class="ia-block-icon">🤖</div><div><div class="ia-block-label">Synthèse</div><div class="ia-block-text">${ia.resume}</div></div></div>`;
+    if(ia.signal_fort) html += `<div class="ia-block signal-bl"><div class="ia-block-icon">⚡</div><div><div class="ia-block-label">Signal fort</div><div class="ia-block-text">${ia.signal_fort}</div></div></div>`;
+    if(ia.alerte) html += `<div class="ia-block alerte-bl"><div class="ia-block-icon">⚠️</div><div><div class="ia-block-label">Point de vigilance</div><div class="ia-block-text">${ia.alerte}</div></div></div>`;
+    if(ia.conseil) html += `<div class="ia-block conseil-bl"><div class="ia-block-icon">💡</div><div><div class="ia-block-label">Action recommandée</div><div class="ia-block-text">${ia.conseil}</div></div></div>`;
+    if(!html) html = '<div style="color:var(--text-sub);padding:2rem;text-align:center">Aucune analyse disponible — enregistrez une période.</div>';
+    document.getElementById('evoIaBlocks').innerHTML = html;
+    const btn = document.getElementById('evoRefreshIaBtn');
+    if(btn) btn.style.display = ia.resume ? 'inline-flex' : 'none';
+}
+function refreshIaDisplay() {
+    const hist = evoDonnees.historique || [];
+    if(hist.length) renderIaBlocks(hist[hist.length-1]);
+}
+
+/* ── HISTORIQUE ── */
+function renderHistorique(hist) {
+    document.getElementById('evoHistorique').innerHTML = [...hist].reverse().map(p => {
+        const ia = parseIa(p.resume_ia);
+        const kpisHtml = Object.entries(p.valeurs).map(([k,v]) =>
+            `<span style="font-size:0.75rem;background:var(--primary-light);color:var(--primary);padding:0.15rem 0.55rem;border-radius:20px;font-weight:600">${k} : ${formatNum(v)}</span>`
+        ).join('');
+        return `<div class="periode-card">
+            <div class="periode-note note-${p.note}" style="background:${noteBg(p.note)};color:${noteColor(p.note)};border-color:${noteColor(p.note)}">${p.note}</div>
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:1rem">${p.label}</div>
+                <div style="font-size:0.8rem;color:var(--text-sub);margin-top:0.2rem">${p.date} · Score ${p.score}/100</div>
+                ${ia.resume ? `<div style="font-size:0.88rem;color:var(--text-main);margin-top:0.4rem;line-height:1.5;font-style:italic">${ia.resume}</div>` : ''}
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">${kpisHtml}</div>
+            </div>
+            <button class="btn-danger-sm" onclick="supprimerPeriode(${p.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
+    }).join('');
+}
+
+/* ── UPLOAD ── */
+document.getElementById('evoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if(evoSelectedCols.length === 0) { alert('Sélectionnez au moins un indicateur.'); return; }
+    const fd = new FormData(this);
+    evoSelectedCols.forEach(c => fd.append('colonnes', c));
+    fd.append('sauvegarder_kpis', 'true');
+    document.getElementById('evoLoadingState').style.display = 'block';
+    document.getElementById('evoSubmitBtn').disabled = true;
+    document.getElementById('evoFileStatus').textContent = '';
+    fetch('/evolution_upload', { method: 'POST', body: fd })
+    .then(r => r.json()).then(data => {
+        document.getElementById('evoLoadingState').style.display = 'none';
+        document.getElementById('evoSubmitBtn').disabled = false;
+        if(data.success) {
+            document.getElementById('evoFileInput').value = '';
+            document.getElementById('evoFileName').textContent = 'Cliquez ou glissez votre fichier';
+            document.getElementById('evoColSelectZone').style.display = 'none';
+            document.getElementById('evoColPlaceholder').style.display = 'block';
+            document.getElementById('evoFileStatus').textContent = '✓ Période "' + data.label_periode + '" enregistrée !';
+            evoSelectedCols = [];
+            evoDonnees = data;
+            renderEvoDashboard(data);
+            switchEvoTab('kpis');
+        } else { alert('Erreur : ' + data.error); }
+    }).catch(err => {
+        document.getElementById('evoLoadingState').style.display = 'none';
+        document.getElementById('evoSubmitBtn').disabled = false;
+        alert('Erreur réseau : ' + err);
+    });
+});
+
+function supprimerPeriode(id) {
+    if(!confirm('Supprimer cette période ? Action irréversible.')) return;
+    fetch('/evolution_supprimer/' + id, { method: 'DELETE' })
+    .then(r => r.json()).then(data => {
+        if(data.success) { chargerHistorique(); document.getElementById('evoFileStatus').textContent = 'Période supprimée.'; }
+        else alert('Erreur : ' + data.error);
+    });
+}
+
+// ============================================================
+// BENCHMARK SECTORIEL
+// ============================================================
+const BENCH_META = {
+    ca_et_marge: {
+        label: 'CA & Marges', icon: 'fa-chart-line', color: '#4338ca',
+        metrics: {
+            croissance_ca_annuelle: { label: 'Croissance CA annuelle', unit: '%', good: 'haut' },
+            marge_brute:            { label: 'Marge brute',            unit: '%', good: 'haut' },
+            marge_nette:            { label: 'Marge nette',            unit: '%', good: 'haut' },
+            ebitda:                 { label: 'EBITDA',                 unit: '%', good: 'haut' }
+        }
+    },
+    couts_et_charges: {
+        label: 'Coûts & Charges', icon: 'fa-receipt', color: '#ef4444',
+        metrics: {
+            charges_personnel_sur_ca: { label: 'Charges personnel / CA', unit: '%', good: 'bas' },
+            charges_fixes_sur_ca:     { label: 'Charges fixes / CA',     unit: '%', good: 'bas' },
+            cout_acquisition_client:  { label: 'Coût acquisition client', unit: '€', good: 'bas' }
+        }
+    },
+    clients_et_retention: {
+        label: 'Clients & Rétention', icon: 'fa-users', color: '#10b981',
+        metrics: {
+            taux_retention_client: { label: 'Taux de rétention',  unit: '%', good: 'haut' },
+            taux_churn:            { label: 'Taux de churn',      unit: '%', good: 'bas'  },
+            panier_moyen:          { label: 'Panier moyen',       unit: '€', good: 'haut' },
+            nb_clients_actifs:     { label: 'Clients actifs',     unit: '',  good: 'haut' }
+        }
+    },
+    productivite_et_rh: {
+        label: 'Productivité & RH', icon: 'fa-people-group', color: '#8b5cf6',
+        metrics: {
+            ca_par_employe:        { label: 'CA par employé',       unit: '€', good: 'haut' },
+            taux_absenteisme:      { label: "Taux d'absentéisme",   unit: '%', good: 'bas'  },
+            turnover:              { label: 'Turnover',             unit: '%', good: 'bas'  },
+            masse_salariale_sur_ca:{ label: 'Masse salariale / CA', unit: '%', good: 'bas'  }
+        }
+    },
+    sante_financiere: {
+        label: 'Santé Financière', icon: 'fa-shield-halved', color: '#f59e0b',
+        metrics: {
+            ratio_liquidite:         { label: 'Ratio de liquidité',      unit: '',    good: 'haut' },
+            delai_paiement_clients:  { label: 'Délai paiement clients',  unit: ' j',  good: 'bas'  },
+            dette_sur_capital:       { label: 'Dette / Capital',         unit: '%',   good: 'bas'  },
+            bfr_sur_ca:              { label: 'BFR / CA',                unit: '%',   good: 'bas'  }
+        }
+    }
+};
+
+function chargerBenchmark(force) {
+    force = force || false;
+    document.getElementById('benchLoading').style.display = 'block';
+    document.getElementById('benchMain').style.display = 'none';
+    const url = force ? '/benchmark?force=true' : '/benchmark';
+    fetch(url)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('benchLoading').style.display = 'none';
+        if (!data.success) {
+            document.getElementById('benchLoading').innerHTML =
+                `<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div>Erreur : ${data.error}</div></div>`;
+            document.getElementById('benchLoading').style.display = 'block';
+            return;
+        }
+        renderBenchmark(data);
+        document.getElementById('benchMain').style.display = 'block';
+    }).catch(() => {
+        document.getElementById('benchLoading').innerHTML =
+            '<div class="empty-state">Erreur de connexion. Réessayez.</div>';
+        document.getElementById('benchLoading').style.display = 'block';
+    });
+}
+
+function benchParseVal(str) {
+    if (str === null || str === undefined) return null;
+    const m = String(str).replace(',', '.').match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : null;
+}
+
+function benchStatus(val, bas, moy, haut, good) {
+    if (good === 'haut') {
+        if (val >= haut) return ['▲ Top 25% secteur', 'var(--success)'];
+        if (val >= moy)  return ['↗ Au-dessus médiane', '#16a34a'];
+        if (val >= bas)  return ['↘ Sous la médiane', 'var(--warning)'];
+        return ['▼ Bas 25% secteur', 'var(--danger)'];
+    } else {
+        if (val <= bas)  return ['▲ Top 25% secteur', 'var(--success)'];
+        if (val <= moy)  return ['↗ Meilleur que médiane', '#16a34a'];
+        if (val <= haut) return ['↘ Moins bon que médiane', 'var(--warning)'];
+        return ['▼ Bas 25% secteur', 'var(--danger)'];
+    }
+}
+
+function renderBenchmark(data) {
+    const bench = data.benchmark;
+    document.getElementById('benchSourceInfo').innerHTML = data.cached
+        ? '<i class="fa-solid fa-database"></i> Données en cache · INSEE · Banque de France · BPI France · Réf. 2023-2024'
+        : '<i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary)"></i> Benchmark généré par IA · INSEE · Banque de France · BPI France · Réf. 2023-2024';
+
+    const nav = document.getElementById('benchCatNav');
+    const content = document.getElementById('benchCatContent');
+    nav.innerHTML = ''; content.innerHTML = '';
+
+    let first = true;
+    Object.entries(BENCH_META).forEach(([catKey, catMeta]) => {
+        const catData = bench[catKey];
+        if (!catData) return;
+
+        const pill = document.createElement('button');
+        pill.className = 'bench-cat-btn' + (first ? ' active' : '');
+        pill.id = `benchpill_${catKey}`;
+        pill.innerHTML = `<i class="fa-solid ${catMeta.icon}"></i> ${catMeta.label}`;
+        pill.onclick = () => switchBenchCat(catKey);
+        nav.appendChild(pill);
+
+        const section = document.createElement('div');
+        section.className = 'bench-cat-section' + (first ? ' active' : '');
+        section.id = `benchsec_${catKey}`;
+
+        let html = `<div class="bench-cat-header" style="color:${catMeta.color}">
+            <i class="fa-solid ${catMeta.icon}"></i> ${catMeta.label}
+        </div><div class="bench-metrics-grid">`;
+
+        Object.entries(catMeta.metrics).forEach(([metKey, metMeta]) => {
+            const vals = catData[metKey];
+            if (!vals) return;
+            const bas = benchParseVal(vals.bas);
+            const moy = benchParseVal(vals.moyenne);
+            const haut = benchParseVal(vals.haut);
+            const rng = (haut !== null && bas !== null && haut !== bas) ? haut - bas : 1;
+            const medPct = (moy !== null && bas !== null) ? Math.max(5, Math.min(95, ((moy - bas) / rng) * 100)) : 50;
+            const stored = localStorage.getItem(`bench_${catKey}_${metKey}`) || '';
+
+            html += `<div class="bench-metric-card">
+                <div class="bench-metric-name">${metMeta.label}</div>
+                <div class="bench-val-row">
+                    <div class="bench-val-box">
+                        <div class="bench-val-num" style="color:var(--text-sub)">${vals.bas}</div>
+                        <div class="bench-val-lbl">25e p.</div>
+                    </div>
+                    <div class="bench-val-box moy">
+                        <div class="bench-val-num">${vals.moyenne}</div>
+                        <div class="bench-val-lbl">Médiane</div>
+                    </div>
+                    <div class="bench-val-box">
+                        <div class="bench-val-num" style="color:var(--text-sub)">${vals.haut}</div>
+                        <div class="bench-val-lbl">75e p.</div>
+                    </div>
+                </div>
+                <div class="bench-track-wrap">
+                    <div class="bench-track-bg"></div>
+                    <div class="bench-track-median" style="left:${medPct}%" title="Médiane : ${vals.moyenne}"></div>
+                    <div class="bench-track-user" id="bmu_${catKey}_${metKey}"></div>
+                </div>
+                <div class="bench-user-row">
+                    <span style="font-size:0.8rem;color:var(--text-sub);font-weight:600;flex-shrink:0">Moi :</span>
+                    <input type="number" class="bench-user-input"
+                        id="bmin_${catKey}_${metKey}"
+                        placeholder="—"
+                        value="${stored}"
+                        data-cat="${catKey}" data-met="${metKey}"
+                        data-bas="${bas}" data-moy="${moy}" data-haut="${haut}"
+                        data-rng="${rng}"
+                        data-good="${metMeta.good}"
+                        oninput="updateBenchUser(this)">
+                    <span class="bench-user-unit">${metMeta.unit}</span>
+                    <span class="bench-user-status" id="bms_${catKey}_${metKey}"></span>
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+        section.innerHTML = html;
+        content.appendChild(section);
+        first = false;
+    });
+
+    // Re-appliquer les valeurs mémorisées
+    document.querySelectorAll('.bench-user-input').forEach(inp => {
+        if (inp.value !== '') updateBenchUser(inp);
+    });
+}
+
+function switchBenchCat(catKey) {
+    document.querySelectorAll('.bench-cat-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.bench-cat-section').forEach(s => s.classList.remove('active'));
+    const p = document.getElementById(`benchpill_${catKey}`);
+    const s = document.getElementById(`benchsec_${catKey}`);
+    if (p) p.classList.add('active');
+    if (s) s.classList.add('active');
+}
+
+function updateBenchUser(input) {
+    const { cat, met, bas, moy, haut, rng, good } = input.dataset;
+    const val = parseFloat(input.value);
+    const lsKey = `bench_${cat}_${met}`;
+
+    const marker = document.getElementById(`bmu_${cat}_${met}`);
+    const statusEl = document.getElementById(`bms_${cat}_${met}`);
+
+    if (isNaN(val)) {
+        localStorage.removeItem(lsKey);
+        if (marker) marker.style.display = 'none';
+        if (statusEl) { statusEl.textContent = ''; }
+        return;
+    }
+
+    localStorage.setItem(lsKey, val);
+
+    const b = parseFloat(bas), m = parseFloat(moy), h = parseFloat(haut), r = parseFloat(rng);
+    if (isNaN(b) || isNaN(h) || r === 0) return;
+
+    const pct = Math.max(2, Math.min(98, ((val - b) / r) * 100));
+    if (marker) {
+        const [txt, color] = benchStatus(val, b, m, h, good);
+        marker.style.display = 'block';
+        marker.style.left = pct + '%';
+        marker.style.background = color;
+        marker.style.color = color;
+        if (statusEl) { statusEl.textContent = txt; statusEl.style.color = color; }
+    }
+}
+
+// ============================================================
+// ALERTES & RISQUES
+// ============================================================
+function chargerAlertes() {
+    document.getElementById('alertesLoading').style.display = 'block';
+    document.getElementById('alertesMain').style.display = 'none';
+    document.getElementById('alertesEmpty').style.display = 'none';
+    fetch('/alertes')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('alertesLoading').style.display = 'none';
+        if (!data.success) { document.getElementById('alertesEmpty').style.display = 'block'; return; }
+        renderAlertes(data);
+        document.getElementById('alertesMain').style.display = 'block';
+    }).catch(() => {
+        document.getElementById('alertesLoading').style.display = 'none';
+        document.getElementById('alertesEmpty').style.display = 'block';
+    });
+}
+
+function renderAlertes(data) {
+    const alertes = data.alertes || [];
+    const critCount = alertes.filter(a => a.niveau === 'critique').length;
+    const warnCount = alertes.filter(a => a.niveau === 'attention').length;
+    document.getElementById('alertesCritCount').textContent = critCount;
+    document.getElementById('alertesWarnCount').textContent = warnCount;
+    document.getElementById('alertesPeriodeInfo').textContent =
+        `Période : ${data.label_actuel || '—'} · Note ${data.note || '—'} (${data.score || 0}/100)`;
+
+    if (!alertes.length) {
+        document.getElementById('alertesList').innerHTML =
+            `<div class="alerte-card ok">
+                <div class="alerte-icon">✅</div>
+                <div>
+                    <div class="alerte-kpi" style="color:var(--success)">Tous les indicateurs sont dans les normes</div>
+                    <div class="alerte-msg" style="color:var(--success)">Aucune variation significative détectée sur la dernière période comparée à la précédente.</div>
+                </div>
+            </div>`;
+        return;
+    }
+
+    document.getElementById('alertesList').innerHTML = alertes.map(a => {
+        const icon = a.niveau === 'critique' ? '🔴' : '🟡';
+        const color = a.niveau === 'critique' ? 'var(--danger)' : 'var(--warning)';
+        const deltaStr = (a.delta_pct > 0 ? '+' : '') + a.delta_pct + '% vs période préc.';
+        return `<div class="alerte-card ${a.niveau}">
+            <div class="alerte-icon">${icon}</div>
+            <div style="flex:1">
+                <div class="alerte-kpi">${a.kpi}</div>
+                <div class="alerte-delta" style="color:${color}">${deltaStr} · Actuel : ${formatNum(a.valeur)} · Préc. : ${formatNum(a.precedent)}</div>
+                ${a.message ? `<div class="alerte-msg">${a.message}</div>` : ''}
+                ${a.action ? `<div class="alerte-action-text">→ ${a.action}</div>` : ''}
+            </div>
+            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:${color};flex-shrink:0">${a.niveau}</div>
+        </div>`;
+    }).join('');
+}
+
+// ============================================================
+// WHAT-IF
+// ============================================================
+let whatifBaseData = {};
+let whatifImportances = {};
+
+function chargerWhatif() {
+    document.getElementById('whatifLoading').style.display = 'block';
+    document.getElementById('whatifMain').style.display = 'none';
+    document.getElementById('whatifEmpty').style.display = 'none';
+    fetch('/whatif_data')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('whatifLoading').style.display = 'none';
+        if (!data.success || !data.kpis || !Object.keys(data.kpis).length) {
+            document.getElementById('whatifEmpty').style.display = 'block';
+            return;
+        }
+        whatifBaseData = data.kpis;
+        whatifImportances = data.importances_pct || {};
+        document.getElementById('whatifPeriodeRef').textContent = '— Base : ' + data.label;
+
+        // Bandeau source des importances
+        const modelInfo = document.getElementById('whatifModelInfo');
+        const src = data.source || 'egal';
+        const icons = { historique: '🟢', analyseur: '🔵', egal: '🟠' };
+        modelInfo.innerHTML = `${icons[src] || '🟠'} <strong>Source des importances :</strong> ${data.source_label || '—'}`;
+        modelInfo.style.color = src === 'egal' ? 'var(--warning)' : 'var(--text-main)';
+
+        renderSliders(data.kpis, data.importances_pct || {});
+        document.getElementById('whatifMain').style.display = 'block';
+    }).catch(() => {
+        document.getElementById('whatifLoading').style.display = 'none';
+        document.getElementById('whatifEmpty').style.display = 'block';
+    });
+}
+
+function renderSliders(valeurs, importances) {
+    // Trier les KPIs par importance décroissante
+    const sorted = Object.entries(valeurs).sort((a, b) => (importances[b[0]] || 0) - (importances[a[0]] || 0));
+    document.getElementById('whatifSliders').innerHTML = sorted.map(([kpi, val]) => {
+        const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+        const imp = importances[kpi] || 0;
+        const impColor = imp >= 30 ? 'var(--danger)' : (imp >= 15 ? 'var(--warning)' : 'var(--text-sub)');
+        const impLabel = imp >= 30 ? 'Influence forte' : (imp >= 15 ? 'Influence moyenne' : 'Influence faible');
+        return `<div class="slider-wrap">
+            <div class="slider-header">
+                <div style="display:flex;align-items:center;gap:0.6rem">
+                    <span class="slider-kpi-name">${kpi}</span>
+                    <span style="font-size:0.75rem;font-weight:700;color:${impColor};background:${impColor === 'var(--danger)' ? 'var(--danger-bg)' : (impColor === 'var(--warning)' ? 'var(--warning-bg)' : '#f1f5f9')};padding:0.15rem 0.55rem;border-radius:20px" title="${impLabel}">${imp}% influence</span>
+                </div>
+                <span class="slider-badge" id="badge_${key}">0%</span>
+            </div>
+            <input type="range" min="-50" max="50" value="0" step="1"
+                id="slider_${key}" data-kpi="${kpi}" oninput="updateSliderBadge(this)">
+            <div class="slider-base">Base : <strong>${formatNum(val)}</strong> → Simulation : <span id="sim_${key}">${formatNum(val)}</span></div>
+        </div>`;
+    }).join('');
+}
+
+function updateSliderBadge(slider) {
+    const kpi = slider.dataset.kpi;
+    const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+    const val = parseInt(slider.value);
+    const badge = document.getElementById('badge_' + key);
+    badge.textContent = (val > 0 ? '+' : '') + val + '%';
+    badge.style.background = val > 0 ? 'var(--success-bg)' : (val < 0 ? 'var(--danger-bg)' : 'var(--primary-light)');
+    badge.style.color = val > 0 ? 'var(--success)' : (val < 0 ? 'var(--danger)' : 'var(--primary)');
+    const baseVal = whatifBaseData[kpi];
+    if (baseVal !== undefined) {
+        const sim = document.getElementById('sim_' + key);
+        if (sim) sim.textContent = formatNum(baseVal * (1 + val / 100));
+    }
+}
+
+function resetSliders() {
+    Object.keys(whatifBaseData).forEach(kpi => {
+        const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+        const slider = document.getElementById('slider_' + key);
+        if (slider) { slider.value = 0; updateSliderBadge(slider); }
+    });
+    document.getElementById('whatifResultBox').style.display = 'none';
+}
+
+function simulerWhatif() {
+    const ajustements = {};
+    Object.keys(whatifBaseData).forEach(kpi => {
+        const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+        const slider = document.getElementById('slider_' + key);
+        if (slider) ajustements[kpi] = parseInt(slider.value);
+    });
+    document.getElementById('whatifCalcLoading').style.display = 'inline';
+    document.getElementById('whatifBtn').disabled = true;
+    fetch('/whatif', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ ajustements })
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('whatifCalcLoading').style.display = 'none';
+        document.getElementById('whatifBtn').disabled = false;
+        if (!data.success) { alert('Erreur : ' + data.error); return; }
+        renderWhatifResult(data);
+    }).catch(() => {
+        document.getElementById('whatifCalcLoading').style.display = 'none';
+        document.getElementById('whatifBtn').disabled = false;
+        alert('Erreur de connexion.');
+    });
+}
+
+function renderWhatifResult(data) {
+    const box = document.getElementById('whatifResultBox');
+    box.style.display = 'block';
+
+    const nb = document.getElementById('whatifNoteBase');
+    nb.textContent = data.note_base; nb.className = 'whatif-note-badge note-' + data.note_base;
+    const ns = document.getElementById('whatifNoteSim');
+    ns.textContent = data.note_simulee; ns.className = 'whatif-note-badge note-' + data.note_simulee;
+
+    const delta = parseFloat((data.score_simule - data.score_base).toFixed(1));
+    const deltaEl = document.getElementById('whatifScoreDelta');
+    deltaEl.textContent = (delta > 0 ? '+' : '') + delta + ' pts (' + data.score_base + ' → ' + data.score_simule + '/100)';
+    deltaEl.style.color = delta > 0 ? 'var(--success)' : (delta < 0 ? 'var(--danger)' : 'var(--text-sub)');
+
+    document.getElementById('whatifImpactPrincipal').textContent = data.impact || '';
+    document.getElementById('whatifAnalyseText').textContent = data.analyse_ia || '';
+    document.getElementById('whatifRecoText').textContent = data.recommandation ? '→ ' + data.recommandation : '';
+
+    // Tableau KPIs simulés + badge importance
+    const imps = data.importances_pct || {};
+    const sorted = Object.entries(data.vals_base).sort((a, b) => (imps[b[0]] || 0) - (imps[a[0]] || 0));
+    document.getElementById('whatifKpiCompar').innerHTML = sorted.map(([kpi, base]) => {
+        const sim = data.vals_simules[kpi];
+        const diff = sim - base;
+        const pct = base !== 0 ? (diff / Math.abs(base) * 100).toFixed(1) : 0;
+        const color = diff > 0 ? 'var(--success)' : (diff < 0 ? 'var(--danger)' : 'var(--text-sub)');
+        const imp = imps[kpi] || 0;
+        const impColor = imp >= 30 ? 'var(--danger)' : (imp >= 15 ? 'var(--warning)' : 'var(--text-sub)');
+        return `<div class="whatif-kpi-item">
+            <div class="whatif-kpi-nm">${kpi}</div>
+            <div class="whatif-kpi-v">${formatNum(sim)}</div>
+            <div class="whatif-kpi-d" style="color:${color}">${diff >= 0 ? '+' : ''}${pct}% vs base</div>
+            <div style="font-size:0.72rem;color:${impColor};margin-top:0.2rem;font-weight:700">${imp}% influence</div>
+        </div>`;
+    }).join('');
+
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============================================================
+// SYNTHÈSE EXÉCUTIVE PDF
+// ============================================================
+function chargerSynthese() {
+    const infoDiv = document.getElementById('syntheseDataInfo');
+    const kpiDiv = document.getElementById('syntheseKpiList');
+    fetch('/evolution_data')
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success || !data.historique || !data.historique.length) {
+            infoDiv.textContent = 'Aucune donnée disponible. Enregistrez d\'abord une période dans Évolution & Pilotage.';
+            kpiDiv.innerHTML = '';
+            return;
+        }
+        const d = data.historique[data.historique.length - 1];
+        infoDiv.innerHTML = `Période : <strong>${d.label}</strong> · Note <strong>${d.note}</strong> (${d.score}/100) · Entreprise : <strong>${data.entreprise || '—'}</strong>`;
+        kpiDiv.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem">${
+            Object.entries(d.valeurs).map(([k,v]) =>
+                `<span style="background:var(--primary-light);color:var(--primary);padding:0.3rem 0.8rem;border-radius:20px;font-size:0.85rem;font-weight:700">${k} : ${formatNum(v)}</span>`
+            ).join('')
+        }</div>`;
+    }).catch(() => { infoDiv.textContent = 'Erreur de chargement.'; });
+}
+
+function exporterPDF() {
+    const btn = document.getElementById('synthesePdfBtn');
+    const loading = document.getElementById('synthesePdfLoading');
+    const success = document.getElementById('synthesePdfSuccess');
+    const notes = document.getElementById('syntheseNotes').value.trim();
+
+    const analyseEl = document.getElementById('analyseTexte');
+    const analyseText = analyseEl ? analyseEl.innerText.trim() : '';
+    const recommandations = [];
+    document.querySelectorAll('.reco-card').forEach(card => {
+        const action = card.querySelector('.reco-action');
+        const detail = card.querySelector('.reco-detail');
+        if (action) recommandations.push({ action: action.textContent.trim(), detail: detail ? detail.textContent.trim() : '' });
+    });
+
+    btn.disabled = true;
+    loading.style.display = 'inline';
+    success.style.display = 'none';
+
+    fetch('/export_pdf', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            analyse: analyseText + (notes ? '\n\nNotes : ' + notes : ''),
+            recommandations
+        })
+    })
+    .then(r => {
+        if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'Erreur serveur'); });
+        return r.blob();
+    })
+    .then(blob => {
+        btn.disabled = false;
+        loading.style.display = 'none';
+        success.style.display = 'inline';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'synthese_boussole_' + new Date().toISOString().slice(0,10) + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setTimeout(() => { success.style.display = 'none'; }, 3000);
+    })
+    .catch(err => {
+        btn.disabled = false;
+        loading.style.display = 'none';
+        alert('Erreur : ' + err.message);
+    });
+}
+</script>
+</body>
+</html>

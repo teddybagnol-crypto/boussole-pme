@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription — Ted & Co</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#fafaf8;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:2.5rem;width:100%;max-width:400px}
+.logo{font-size:22px;text-align:center;margin-bottom:2rem}.logo span{color:#1D9E75}
+h1{font-size:20px;font-weight:500;margin-bottom:6px;text-align:center}
+p{font-size:14px;color:#6b7280;text-align:center;margin-bottom:2rem;font-weight:300}
+input{width:100%;padding:11px 14px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:12px;outline:none;transition:border-color .2s}
+input:focus{border-color:#1D9E75}
+button{width:100%;padding:12px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .2s;font-weight:500}
+button:hover{opacity:.85}
+.link{text-align:center;margin-top:1rem;font-size:13px;color:#6b7280}
+.link a{color:#1D9E75;text-decoration:none;font-weight:500}
+.error{background:#FEE2E2;color:#991B1B;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+.success{background:#E1F5EE;color:#085041;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Ted <span>&</span> Co</div>
+  <h1>Créer un compte</h1>
+  <p>Commencez votre diagnostic gratuit</p>
+  <div class="error" id="error"></div>
+  <div class="success" id="success"></div>
+  <input type="text" id="entreprise" placeholder="Nom de votre entreprise">
+  <input type="email" id="email" placeholder="Email professionnel">
+  <input type="password" id="password" placeholder="Mot de passe">
+  <button onclick="inscrire()">Créer mon compte →</button>
+  <div class="link">Déjà un compte ? <a href="/login">Se connecter</a></div>
+</div>
+<script>
+async function inscrire(){
+  const form = new FormData();
+  form.append('entreprise', document.getElementById('entreprise').value);
+  form.append('email', document.getElementById('email').value);
+  form.append('password', document.getElementById('password').value);
+  const resp = await fetch('/inscription', {method:'POST', body:form});
+  const data = await resp.json();
+  if(data.success){
+    document.getElementById('success').textContent = 'Compte créé ! Redirection...';
+    document.getElementById('success').style.display = 'block';
+    setTimeout(() => window.location.href = data.redirect, 1000);
+  } else {
+    const err = document.getElementById('error');
+    err.textContent = data.error;
+    err.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

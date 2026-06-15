@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+instance/
+flask_sessions/
+.env
+*.db
+*.pyc
+.DS_Store

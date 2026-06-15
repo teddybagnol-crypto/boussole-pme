@@ -1,0 +1,208 @@
+# ============================================================
+# PATCH app.py — ajouter ces 2 blocs dans ton app.py existant
+# ============================================================
+ 
+# --- BLOC 1 : imports supplémentaires (en haut du fichier) ---
+# (si pas déjà présents)
+# from sklearn.linear_model import LinearRegression
+# import warnings
+# warnings.filterwarnings('ignore')
+ 
+# --- BLOC 2 : nouvelle route /evolution (avant le if __name__) ---
+ 
+@app.route('/evolution', methods=['POST'])
+@login_required
+def evolution():
+    try:
+        file = request.files.get('file')
+        colonnes_select = request.form.getlist('colonnes')  # colonnes choisies par l'user
+        col_date = request.form.get('col_date', '')
+ 
+        if not file or file.filename == '':
+            return jsonify({'success': False, 'error': 'Aucun fichier reçu.'})
+ 
+        filename = file.filename.lower()
+        file_bytes = file.read()
+ 
+        # --- Lecture du fichier ---
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = pd.read_excel(io.BytesIO(file_bytes))
+        elif filename.endswith('.csv'):
+            df = None
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                for sep in [',', ';']:
+                    try:
+                        tmp = pd.read_csv(io.BytesIO(file_bytes), encoding=encoding, sep=sep)
+                        if tmp.shape[1] > 1:
+                            df = tmp
+                            break
+                    except:
+                        continue
+                if df is not None:
+                    break
+            if df is None:
+                df = pd.read_csv(io.BytesIO(file_bytes), sep=None, engine='python')
+        else:
+            return jsonify({'success': False, 'error': 'Format non supporté (CSV ou Excel uniquement).'})
+ 
+        if df is None or df.empty:
+            return jsonify({'success': False, 'error': 'Fichier vide ou illisible.'})
+ 
+        # Nettoyage noms de colonnes
+        df.columns = [str(c).strip() for c in df.columns]
+        all_cols = list(df.columns)
+ 
+        # --- Détection colonne date ---
+        date_col = None
+        if col_date and col_date in df.columns:
+            date_col = col_date
+        else:
+            for c in df.columns:
+                try:
+                    parsed = pd.to_datetime(df[c], errors='coerce')
+                    if parsed.notna().sum() > len(df) * 0.5:
+                        date_col = c
+                        break
+                except:
+                    continue
+ 
+        if date_col:
+            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+            df = df.sort_values(date_col)
+            labels = df[date_col].dt.strftime('%d/%m/%Y').tolist()
+        else:
+            labels = [str(i+1) for i in range(len(df))]
+ 
+        # --- Colonnes numériques sélectionnées ---
+        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        if colonnes_select:
+            cols_to_use = [c for c in colonnes_select if c in numeric_cols]
+        else:
+            cols_to_use = numeric_cols[:5]
+ 
+        if not cols_to_use:
+            return jsonify({'success': False, 'error': 'Aucune colonne numérique trouvée.'})
+ 
+        # --- KPIs synthèse ---
+        kpis = []
+        for col in cols_to_use[:4]:
+            serie = df[col].dropna()
+            if len(serie) < 2:
+                continue
+            valeur_actuelle = round(float(serie.iloc[-1]), 2)
+            valeur_precedente = round(float(serie.iloc[-2]), 2)
+            moyenne = round(float(serie.mean()), 2)
+            delta = round(valeur_actuelle - valeur_precedente, 2)
+            delta_pct = round((delta / valeur_precedente * 100) if valeur_precedente != 0 else 0, 1)
+            kpis.append({
+                'nom': col,
+                'valeur': valeur_actuelle,
+                'delta': delta,
+                'delta_pct': delta_pct,
+                'moyenne': moyenne,
+                'trend': 'up' if delta > 0 else ('down' if delta < 0 else 'flat')
+            })
+ 
+        # --- Données séries temporelles pour graphiques ---
+        series = {}
+        for col in cols_to_use:
+            series[col] = [
+                round(float(v), 2) if not np.isnan(v) else None
+                for v in df[col].tolist()
+            ]
+ 
+        # --- Prévision simple (régression linéaire) pour chaque colonne ---
+        previsions = {}
+        horizon = 3
+        for col in cols_to_use[:3]:
+            serie = df[col].dropna()
+            if len(serie) < 4:
+                continue
+            try:
+                from sklearn.linear_model import LinearRegression
+                X_reg = np.arange(len(serie)).reshape(-1, 1)
+                y_reg = serie.values
+                lr = LinearRegression().fit(X_reg, y_reg)
+                future_X = np.arange(len(serie), len(serie) + horizon).reshape(-1, 1)
+                preds = lr.predict(future_X)
+                previsions[col] = {
+                    'valeurs': [round(float(p), 2) for p in preds],
+                    'labels': [f'M+{i+1}' for i in range(horizon)]
+                }
+            except:
+                pass
+ 
+        # --- Corrélations ---
+        correlations = {}
+        if len(cols_to_use) >= 2:
+            corr_matrix = df[cols_to_use].corr().round(3)
+            for c1 in cols_to_use:
+                for c2 in cols_to_use:
+                    if c1 != c2:
+                        correlations[f'{c1} / {c2}'] = float(corr_matrix.loc[c1, c2])
+ 
+        # --- Statistiques descriptives ---
+        stats_desc = {}
+        for col in cols_to_use:
+            s = df[col].dropna()
+            stats_desc[col] = {
+                'min': round(float(s.min()), 2),
+                'max': round(float(s.max()), 2),
+                'mean': round(float(s.mean()), 2),
+                'std': round(float(s.std()), 2)
+            }
+ 
+        # --- Interprétation IA Groq ---
+        try:
+            API_KEY = os.environ.get('GROQ_API_KEY', '')
+            client = groq.Groq(api_key=API_KEY)
+ 
+            kpis_str = ', '.join([f"{k['nom']}={k['valeur']} (delta {k['delta_pct']}%)" for k in kpis])
+            corr_top = sorted(correlations.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+            corr_str = ', '.join([f"{k}:{v}" for k, v in corr_top])
+ 
+            prompt = f"""Tu es consultant chez Ted & Co. Analyse ces indicateurs d'évolution pour un dirigeant de PME.
+KPIs : {kpis_str}
+Corrélations principales : {corr_str}
+Prévisions M+1/M+2/M+3 : {str({k: v['valeurs'] for k, v in previsions.items()})[:300]}
+ 
+Réponds en JSON uniquement :
+{{
+  "resume": "2-3 phrases clés pour le dirigeant",
+  "signal_fort": "le signal le plus important à retenir",
+  "alerte": "un point de vigilance concret ou null",
+  "conseil": "1 action concrète et chiffrée à prendre"
+}}"""
+ 
+            resp = client.chat.completions.create(
+                model='llama-3.3-70b-versatile',
+                response_format={"type": "json_object"},
+                messages=[{'role': 'user', 'content': prompt}]
+            )
+            ia_interpretation = json.loads(resp.choices[0].message.content)
+        except Exception as e:
+            ia_interpretation = {
+                'resume': 'Analyse disponible.',
+                'signal_fort': str(e)[:80],
+                'alerte': None,
+                'conseil': 'Vérifiez la clé API Groq.'
+            }
+ 
+        return jsonify({
+            'success': True,
+            'all_cols': all_cols,
+            'numeric_cols': numeric_cols,
+            'cols_used': cols_to_use,
+            'labels': labels,
+            'series': series,
+            'kpis': kpis,
+            'previsions': previsions,
+            'correlations': correlations,
+            'stats_desc': stats_desc,
+            'ia': ia_interpretation,
+            'nb_lignes': len(df)
+        })
+ 
+    except Exception as e:
+        print("ERREUR /evolution :", str(e))
+        return jsonify({'success': False, 'error': str(e)})

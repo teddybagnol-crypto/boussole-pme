@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Décisionnel - Ted&Co</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --primary: #4338ca;
+            --primary-light: #e0e7ff;
+            --primary-hover: #3730a3;
+            --border: #cbd5e1;
+            
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+        }
+
+        .brand { 
+            font-weight: 800; 
+            font-size: 1.4rem; 
+            color: var(--primary); 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: var(--text-sub);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .nav-tab:hover, .nav-tab.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .nav-tab.active {
+            border-color: rgba(67, 56, 202, 0.2);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /* Réintégration du modificateur de couleur */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            border-right: 1px solid var(--border);
+            padding-right: 1.2rem;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            box-shadow: 0 0 0 2px var(--border);
+            transition: transform 0.2s ease;
+        }
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .color-picker-wrapper input[type="color"]:hover { transform: scale(1.15); }
+
+        .logout-btn { 
+            color: var(--text-sub); 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { 
+            color: var(--danger); 
+            background: var(--danger-bg);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+            padding-bottom: 10rem;
+        }
+
+        .welcome { 
+            text-align: center;
+            margin-bottom: 3rem; 
+            animation: fadeIn 0.5s ease-out;
+        }
+        .welcome h1 { margin: 0; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; }
+        .welcome p { margin: 0.75rem 0 0 0; color: var(--text-sub); font-size: 1.2rem; }
+
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .hub-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .hub-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 20px -5px rgba(67, 56, 202, 0.15);
+        }
+        .hub-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        .hub-card h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 700; }
+        .hub-card p { color: var(--text-sub); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.5; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 700; margin-bottom: 0.6rem; font-size: 0.95rem; color: var(--text-main); }
+        
+        input[type="file"] {
+            width: 100%;
+            padding: 1.5rem;
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            background: #f8fafc;
+            box-sizing: border-box;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.85rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.05rem;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: var(--primary-hover); }
+
+        .results-section { display: none; }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, #f8fafc 100%);
+            padding: 1.5rem;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .metric-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); }
+        .metric-value { font-size: 2.2rem; font-weight: 900; margin: 0.35rem 0; }
+        .metric-sub { font-size: 0.85rem; color: var(--text-sub); }
+
+        .evolution-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .evolution-table th, .evolution-table td {
+            text-align: left;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-input-container {
+            display: none; 
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 0;
+            z-index: 1000;
+        }
+        .chat-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .chat-inner input { flex: 1; border-radius: 12px; border: 1px solid var(--border); padding: 0.9rem 1.5rem; }
+        .chat-inner .btn { width: auto; }
+
+        .loading { display: none; text-align: center; color: var(--primary); font-weight: 700; margin-top: 1.5rem; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-left">
+            <a href="#" class="brand" onclick="goHome(event)">
+                <i class="fa-solid fa-chart-pie"></i> Ted&Co <span style="font-weight:300; font-size:1.1rem; color:var(--text-sub); margin-left: 0.25rem;">Studio</span>
+            </a>
+            
+            <div class="nav-tabs">
+                <a href="#" class="nav-tab" id="tabHome" onclick="switchTab('home')">
+                    <i class="fa-solid fa-house"></i> Accueil
+                </a>
+                <a href="#" class="nav-tab" id="tabAnalyse" onclick="switchTab('analyse')">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Analyseur
+                </a>
+                <a href="#" class="nav-tab" id="tabEvolution" onclick="switchTab('evolution')">
+                    <i class="fa-solid fa-chart-line"></i> Évolution & Pilotage
+                </a>
+            </div>
+        </div>
+        
+        <div class="user-menu">
+            <!-- SÉLECTEUR DE COULEUR DE FOND RÉINTÉGRÉ -->
+            <div class="color-picker-wrapper">
+                <i class="fa-solid fa-palette"></i> Fond :
+                <input type="color" id="bgPicker" value="#f4f6f9">
+            </div>
+
+            <span style="font-size: 0.9rem;">Bonjour, <strong>{{ user.email if user else 'Invité' }}</strong></span>
+            <a href="/logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnexion</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- PAGE D'ACCUEIL PAR DÉFAUT -->
+        <div id="homeContent">
+            <div class="welcome">
+                <h1>Bienvenue sur votre Espace Décisionnel</h1>
+                <p>Choisissez une direction pour commencer à piloter vos performances économiques.</p>
+            </div>
+
+            <div class="hub-grid">
+                <!-- Carte vers l'analyse -->
+                <div class="hub-card" onclick="switchTab('analyse')">
+                    <div class="hub-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <h2>Analyseur Économétrique</h2>
+                    <p>Déposez vos fichiers de données complexes (CSV, Excel) et obtenez immédiatement des rapports causaux clairs et des plans d'action.</p>
+                    <button class="btn" style="width: auto; padding: 0.6rem 1.5rem;">Y accéder</button>
+                </div>
+
+                <!-- Carte vers le pilotage -->
+                <div class="hub-card" onclick="switchTab('evolution')">
+                    <div class="hub-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h2>Évolution & Pilotage</h2>
+                    <p>Suivez la trajectoire de vos indicateurs de performance à travers le temps et consultez le journal de bord des changements appliqués.</p>
+                    <button class="btn" style="width: auto; padding: 0.6rem 1.5rem;">Y accéder</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ONGLET 1 : ANALYSE -->
+        <div id="analyseContent" style="display: none;">
+            <div class="welcome" style="text-align: left;">
+                <h1>Intelligence Économétrique</h1>
+                <p>Traduisez instantanément vos données complexes en plans d'actions financiers et humains.</p>
+            </div>
+
+            <div class="card" id="uploadCard">
+                <form id="analyseForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-cloud-arrow-up"></i> Étape 1 : Charge ton fichier (CSV, XLSX)</label>
+                        <input type="file" id="fileInput" name="file" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bullseye"></i> Étape 2 : Quelle est ta question principale ?</label>
+                        <input type="text" id="questionInput" name="question" placeholder="Ex: Qu'est-ce qui impacte ma note ? Comment optimiser mon site ?" required>
+                    </div>
+                    <button type="submit" class="btn" id="submitBtn">Lancer la première analyse →</button>
+                </form>
+                <div class="loading" id="loadingState">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> &nbsp;Calcul des régressions et génération des conseils...
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="metrics-grid" id="metricsGrid"></div>
+                <div class="card animate-fade-up">
+                    <div class="section-title"><i class="fa-solid fa-robot" style="color:var(--primary);"></i> Analyse causale & Logique des données</div>
+                    <p id="analyseTexte" style="white-space: pre-line; line-height: 1.75;"></p>
+                </div>
+                <div class="card animate-fade-up" style="animation-delay: 0.1s;">
+                    <div class="section-title"><i class="fa-solid fa-bolt" style="color:#eab308;"></i> Recommandations prioritaires</div>
+                    <div id="recomContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET 2 : EVOLUTION ET PILOTAGE -->
+        <div id="evolutionContent" style="display: none;">
+            <div class="welcome" style="text-align: left;">
+                <h1>Suivi de l'Évolution</h1>
+                <p>Pilotez la trajectoire de l'entreprise et mesurez l'impact réel de vos décisions économétriques.</p>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Objectif Score Global</div>
+                    <div class="metric-value" style="color: var(--success);">8.8<span style="font-size:1.2rem; font-weight:500; color:var(--text-sub);"> /10</span></div>
+                    <div class="metric-sub"><i class="fa-solid fa-caret-up"></i> +0.4 pts vs mois dernier</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Taux d'impact des plans</div>
+                    <div class="metric-value">74%</div>
+                    <div class="metric-sub">12 actions appliquées</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Santé Financière / ROI</div>
+                    <div class="metric-value">+14.2%</div>
+                    <div class="metric-sub">Objectif annuel : +15.0%</div>
+                </div>
+            </div>
+
+            <div class="card animate-fade-up">
+                <div class="section-title"><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> Trajectoire des Indicateurs Clés</div>
+                <div style="position: relative; height:320px; width:100%;">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card animate-fade-up" style="animation-delay: 0.1s;">
+                <div class="section-title"><i class="fa-solid fa-list-check" style="color: var(--warning);"></i> Journal de Bord des Changements Structurels</div>
+                <table class="evolution-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action Appliquée</th>
+                            <th>Cible visée</th>
+                            <th>Impact constaté</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>01/06/2026</strong></td><td>Optimisation de la vitesse du site web</td><td>Taux de rebond</td><td><span style="color:var(--success); font-weight:700;">Réussi (-4%)</span></td></tr>
+                        <tr><td><strong>15/05/2026</strong></td><td>Ajustement de la grille tarifaire Q2</td><td>Marge nette</td><td><span style="color:var(--success); font-weight:700;">Réussi (+2.5%)</span></td></tr>
+                        <tr><td><strong>01/05/2026</strong></td><td>Mise en place du chatbot SAV</td><td>Rétention</td><td><span style="color:var(--warning); font-weight:700;">En cours</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Barre de chat contextuelle basse -->
+    <div class="chat-input-container" id="chatBar">
+        <form id="chatForm" class="chat-inner">
+            <input type="text" id="chatQuestionInput" placeholder="Pose une question de suivi sur cette analyse..." required>
+            <button type="submit" class="btn" id="chatSubmitBtn"><i class="fa-solid fa-paper-plane"></i> Poser</button>
+        </form>
+    </div>
+
+    <script>
+        // Forcer le chargement initial sur la page d'accueil (Home)
+        document.addEventListener("DOMContentLoaded", function() {
+            switchTab('home');
+        });
+
+        function goHome(event) {
+            event.preventDefault();
+            switchTab('home');
+        }
+
+        // Système d'onglets gérant 3 états (Home, Analyse, Evolution)
+        function switchTab(tabName) {
+            const contents = {
+                home: document.getElementById('homeContent'),
+                analyse: document.getElementById('analyseContent'),
+                evolution: document.getElementById('evolutionContent')
+            };
+            
+            const tabs = {
+                home: document.getElementById('tabHome'),
+                analyse: document.getElementById('tabAnalyse'),
+                evolution: document.getElementById('tabEvolution')
+            };
+
+            Object.keys(contents).forEach(key => {
+                if(contents[key]) contents[key].style.display = 'none';
+                if(tabs[key]) tabs[key].classList.remove('active');
+            });
+
+            contents[tabName].style.display = 'block';
+            tabs[tabName].classList.add('active');
+
+            const chatBar = document.getElementById('chatBar');
+            if (tabName === 'analyse' && document.getElementById('resultsSection').style.display === 'block') {
+                chatBar.style.display = 'block';
+            } else {
+                chatBar.style.display = 'none';
+            }
+
+            if (tabName === 'evolution') {
+                initEvolutionChart();
+            }
+        }
+
+        let chartInstance = null;
+        function initEvolutionChart() {
+            if (chartInstance !== null) return;
+            const ctx = document.getElementById('evolutionChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'],
+                    datasets: [{
+                        label: "Score Global",
+                        data: [7.2, 7.5, 7.4, 8.1, 8.4, 8.8],
+                        borderColor: '#4338ca',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // LOGIQUE DU SÉLECTEUR DE COULEUR
+        const bgPicker = document.getElementById('bgPicker');
+        
+        function adjustTextContrast(hexColor) {
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            if (luminance < 0.5) {
+                document.documentElement.style.setProperty('--bg-main', hexColor);
+                document.documentElement.style.setProperty('--card-bg', '#1e293b');
+                document.documentElement.style.setProperty('--text-main', '#f8fafc');
+                document.documentElement.style.setProperty('--text-sub', '#94a3b8');
+                document.documentElement.style.setProperty('--border', '#334155');
+            } else {
+                document.documentElement.style.setProperty('--bg-main', hexColor);
+                document.documentElement.style.setProperty('--card-bg', '#ffffff');
+                document.documentElement.style.setProperty('--text-main', '#1e293b');
+                document.documentElement.style.setProperty('--text-sub', '#64748b');
+                document.documentElement.style.setProperty('--border', '#cbd5e1');
+            }
+        }
+
+        bgPicker.addEventListener('input', function(e) {
+            adjustTextContrast(e.target.value);
+            localStorage.setItem('dashboardBackgroundColor', e.target.value);
+        });
+
+        const savedColor = localStorage.getItem('dashboardBackgroundColor');
+        if (savedColor) {
+            bgPicker.value = savedColor;
+            adjustTextContrast(savedColor);
+        } else {
+            adjustTextContrast(bgPicker.value);
+        }
+
+        // Envoi du formulaire d'analyse
+        document.getElementById('analyseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+
+            fetch('/analyse', { method: 'POST', body: new FormData(this) })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+
+                if (data.success) {
+                    document.getElementById('analyseTexte').innerText = data.result.analyse;
+                    document.getElementById('resultsSection').style.display = 'block';
+                    document.getElementById('chatBar').style.display = 'block';
+                } else {
+                    alert('Erreur : ' + data.error);
+                }
+            }).catch(() => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
