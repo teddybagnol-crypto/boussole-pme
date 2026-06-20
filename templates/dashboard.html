@@ -280,6 +280,17 @@
         .bench-metric-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; transition: border-color 0.2s; }
         .bench-metric-card:hover { border-color: var(--primary); }
         .bench-metric-name { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); margin-bottom: 0.75rem; line-height: 1.4; min-height: 2em; }
+        /* IA Benchmark — Chat */
+        .bench-suggestion { padding: 0.35rem 0.9rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card-bg); color: var(--text-sub); font-size: 0.8rem; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+        .bench-suggestion:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+        #benchThread { max-height: 520px; overflow-y: auto; scroll-behavior: smooth; }
+        .bench-msg-user { background: var(--primary); color: #fff; border-radius: 14px 14px 4px 14px; padding: 0.65rem 1rem; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.9rem; max-width: 88%; margin-left: auto; }
+        .bench-msg-ai { margin-bottom: 1rem; }
+        .bench-msg-loading { color: var(--primary); font-weight: 700; padding: 0.4rem 0 0.6rem; font-size: 0.9rem; }
+        .bench-ia-main { background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); border: 1.5px solid #c7d2fe; border-radius: 14px; padding: 1.1rem 1.35rem; margin-bottom: 0.75rem; }
+        .bench-ia-badge { display: inline-block; padding: 0.25rem 0.8rem; border-radius: 20px; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.03em; }
+        .bench-ia-action { background: var(--card-bg); border: 1px solid var(--border); border-radius: 11px; padding: 0.8rem 1rem; margin-bottom: 0.5rem; display: flex; gap: 0.9rem; align-items: flex-start; }
+        .bench-effort { padding: 0.18rem 0.6rem; border-radius: 9px; font-size: 0.7rem; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
         .bench-val-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.2rem; }
         .bench-val-box { text-align: center; flex: 1; }
         .bench-val-num { font-size: 1.05rem; font-weight: 900; line-height: 1; }
@@ -674,8 +685,6 @@
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:0.9rem"><i class="fa-solid fa-calendar" style="color:var(--primary)"></i> Nom de la période</label>
-                            <input type="text" name="label_periode" id="evoPeriodeLabel" placeholder="Ex: Janvier 2025, T1 2025..." style="margin-bottom:0.75rem">
                             <label style="font-size:0.9rem;margin-top:0.5rem"><i class="fa-solid fa-sliders" style="color:var(--primary)"></i> Indicateurs à suivre</label>
                             <div id="evoColSelectZone" style="display:none">
                                 <div class="col-selector" id="evoColPills"></div>
@@ -819,6 +828,40 @@
             </div>
             <div class="bench-cat-nav" id="benchCatNav"></div>
             <div id="benchCatContent"></div>
+
+            <!-- IA Chat -->
+            <div class="card" style="margin-top:1.75rem">
+                <div class="section-title" style="margin-bottom:0.9rem">
+                    <i class="fa-solid fa-comments" style="color:var(--primary)"></i>
+                    Posez une question sur votre positionnement marché
+                </div>
+
+                <!-- Thread accumulateur -->
+                <div id="benchThread" style="display:none;border:1px solid var(--border);border-radius:12px;padding:1rem;background:var(--bg);margin-bottom:0.9rem"></div>
+
+                <!-- Suggestions — disparaissent après le 1er envoi -->
+                <div id="benchSuggestionsWrap" style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.75rem">
+                    <button class="bench-suggestion" onclick="useBenchSuggestion(this)">Pourquoi ma marge est-elle en dessous du marché ?</button>
+                    <button class="bench-suggestion" onclick="useBenchSuggestion(this)">Comment rattraper mon retard sur la rétention client ?</button>
+                    <button class="bench-suggestion" onclick="useBenchSuggestion(this)">Quel est mon plus gros point faible face au secteur ?</button>
+                    <button class="bench-suggestion" onclick="useBenchSuggestion(this)">Comment optimiser mes charges pour atteindre la médiane ?</button>
+                </div>
+
+                <!-- Barre d'input — toujours visible -->
+                <div style="display:flex;gap:0.75rem;align-items:flex-end">
+                    <textarea id="benchQuestion" rows="2"
+                        placeholder="Posez votre question ou une question de suivi…"
+                        style="flex:1;resize:none;min-height:52px;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-size:0.93rem;background:var(--card-bg);color:var(--text);font-family:inherit;transition:border-color 0.2s"
+                        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();poserQuestionBenchmark();}"></textarea>
+                    <button class="btn-sm" onclick="poserQuestionBenchmark()" id="benchIaBtn" style="padding:0.7rem 1.25rem;white-space:nowrap;flex-shrink:0">
+                        <i class="fa-solid fa-paper-plane"></i> Envoyer
+                    </button>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-sub);margin-top:0.4rem">
+                    <i class="fa-solid fa-keyboard"></i> Entrée pour envoyer · Maj+Entrée pour nouvelle ligne
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1584,7 +1627,11 @@ document.getElementById('evoForm').addEventListener('submit', function(e) {
             document.getElementById('evoFileName').textContent = 'Cliquez ou glissez votre fichier';
             document.getElementById('evoColSelectZone').style.display = 'none';
             document.getElementById('evoColPlaceholder').style.display = 'block';
-            document.getElementById('evoFileStatus').textContent = '✓ Période "' + data.label_periode + '" enregistrée !';
+            const nbImp = data.nb_periodes_importees || 1;
+            const msgImp = nbImp > 1
+                ? '✓ ' + nbImp + ' périodes importées (jusqu\'à "' + data.label_periode + '")'
+                : '✓ Période "' + data.label_periode + '" enregistrée !';
+            document.getElementById('evoFileStatus').textContent = msgImp;
             evoSelectedCols = [];
             evoDonnees = data;
             renderEvoDashboard(data);
@@ -1827,6 +1874,187 @@ function updateBenchUser(input) {
         marker.style.background = color;
         marker.style.color = color;
         if (statusEl) { statusEl.textContent = txt; statusEl.style.color = color; }
+    }
+}
+
+// ============================================================
+// BENCHMARK — IA CONVERSATIONNELLE
+// ============================================================
+const EFFORT_STYLE = {
+    'Faible': { bg: '#f0fdf4', color: '#16a34a' },
+    'Moyen':  { bg: '#fffbeb', color: '#d97706' },
+    'Fort':   { bg: '#fef2f2', color: '#dc2626' }
+};
+
+function _benchBadgeStyle(positionMarche) {
+    const pos = (positionMarche || '').toLowerCase();
+    if (pos.includes('en dessous'))  return { color: '#dc2626', bg: '#fef2f2' };
+    if (pos.includes('au dessus') || pos.includes('au-dessus')) return { color: '#16a34a', bg: '#f0fdf4' };
+    if (pos.includes('médiane') || pos.includes('moyenne'))     return { color: '#d97706', bg: '#fffbeb' };
+    return { color: '#6b7280', bg: '#f3f4f6' };
+}
+
+function useBenchSuggestion(el) {
+    const ta = document.getElementById('benchQuestion');
+    ta.value = el.textContent.trim();
+    ta.focus();
+}
+
+function poserQuestionBenchmark() {
+    const ta = document.getElementById('benchQuestion');
+    const q = (ta.value || '').trim();
+    if (!q) return;
+
+    // Collecter les valeurs du localStorage
+    const valeurs_client = {};
+    Object.keys(BENCH_META).forEach(catKey => {
+        Object.keys(BENCH_META[catKey].metrics).forEach(metKey => {
+            const v = localStorage.getItem(`bench_${catKey}_${metKey}`);
+            if (v !== null) valeurs_client[`${catKey}__${metKey}`] = parseFloat(v);
+        });
+    });
+
+    // Vider l'input immédiatement, masquer suggestions, désactiver bouton
+    ta.value = '';
+    document.getElementById('benchSuggestionsWrap').style.display = 'none';
+    document.getElementById('benchIaBtn').disabled = true;
+
+    // Afficher le thread et y ajouter la bulle utilisateur + indicateur chargement
+    const thread = document.getElementById('benchThread');
+    thread.style.display = 'block';
+
+    const userEl = document.createElement('div');
+    userEl.className = 'bench-msg-user';
+    userEl.innerHTML = `<i class="fa-solid fa-circle-user" style="margin-right:0.35rem;opacity:0.8"></i>${q}`;
+    thread.appendChild(userEl);
+
+    const loadEl = document.createElement('div');
+    loadEl.className = 'bench-msg-loading';
+    loadEl.id = 'benchLoadingBubble';
+    loadEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyse en cours…';
+    thread.appendChild(loadEl);
+    thread.scrollTop = thread.scrollHeight;
+
+    fetch('/benchmark_question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, valeurs_client })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const ld = document.getElementById('benchLoadingBubble');
+        if (ld) ld.remove();
+        document.getElementById('benchIaBtn').disabled = false;
+
+        if (data.success) {
+            _appendAiMsg(data, thread);
+        } else {
+            const errEl = document.createElement('div');
+            errEl.className = 'bench-msg-ai';
+            errEl.innerHTML = `<div style="color:var(--danger);padding:0.75rem 1rem;background:#fef2f2;border-radius:10px;font-size:0.88rem">
+                <i class="fa-solid fa-triangle-exclamation"></i> ${data.error}</div>`;
+            thread.appendChild(errEl);
+        }
+        thread.scrollTop = thread.scrollHeight;
+        ta.focus();
+    })
+    .catch(() => {
+        const ld = document.getElementById('benchLoadingBubble');
+        if (ld) ld.remove();
+        document.getElementById('benchIaBtn').disabled = false;
+        const errEl = document.createElement('div');
+        errEl.className = 'bench-msg-ai';
+        errEl.innerHTML = '<div style="color:var(--danger)">Erreur de connexion. Réessayez.</div>';
+        thread.appendChild(errEl);
+        thread.scrollTop = thread.scrollHeight;
+        ta.focus();
+    });
+}
+
+function _appendAiMsg(data, thread) {
+    const badge = _benchBadgeStyle(data.position_marche);
+
+    const actions = (data.actions_concretes || []).map(a => {
+        const ec = EFFORT_STYLE[a.effort] || EFFORT_STYLE['Moyen'];
+        return `<div class="bench-ia-action">
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem">${a.action}</div>
+                <div style="font-size:0.8rem;color:var(--text-sub)">
+                    <i class="fa-solid fa-arrow-trend-up" style="color:var(--success)"></i> ${a.impact_estime}
+                </div>
+            </div>
+            <span class="bench-effort" style="background:${ec.bg};color:${ec.color}">${a.effort}</span>
+        </div>`;
+    }).join('');
+
+    const causes = (data.causes_probables || [])
+        .map(c => `<li style="margin-bottom:0.25rem;font-size:0.87rem">${c}</li>`).join('');
+
+    const cv = data.comparaison_visuelle || {};
+    const hasChart = cv.client != null && cv.moyenne_secteur != null;
+    const chartId = 'bc_' + Date.now();
+    const chartHtml = hasChart ? `
+        <div style="margin-top:0.75rem;padding:0.75rem;background:var(--card-bg);border:1px solid var(--border);border-radius:10px">
+            <div style="font-size:0.68rem;font-weight:800;color:var(--text-sub);margin-bottom:0.35rem;text-transform:uppercase">
+                ${cv.label || 'Comparaison'}${cv.unite ? ' (' + cv.unite + ')' : ''}
+            </div>
+            <canvas id="${chartId}" height="70"></canvas>
+        </div>` : '';
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'bench-msg-ai';
+    msgEl.innerHTML = `
+        <div class="bench-ia-main">
+            <div style="display:flex;align-items:center;gap:0.55rem;margin-bottom:0.6rem;flex-wrap:wrap">
+                <span class="bench-ia-badge" style="background:${badge.bg};color:${badge.color}">
+                    <i class="fa-solid fa-compass"></i> ${data.position_marche || ''}
+                </span>
+                ${data.ecart_chiffre ? `<span style="font-size:0.83rem;font-weight:700;color:${badge.color}">${data.ecart_chiffre}</span>` : ''}
+            </div>
+            <div style="font-size:0.93rem;line-height:1.6;color:var(--text)">${data.reponse_directe || ''}</div>
+            ${chartHtml}
+        </div>
+        ${causes ? `<div style="margin-bottom:0.7rem">
+            <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-sub);margin-bottom:0.35rem;letter-spacing:0.04em">
+                <i class="fa-solid fa-magnifying-glass"></i> Causes probables
+            </div>
+            <ul style="margin:0;padding-left:1.15rem;color:var(--text)">${causes}</ul>
+        </div>` : ''}
+        ${actions ? `<div>
+            <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-sub);margin-bottom:0.45rem;letter-spacing:0.04em">
+                <i class="fa-solid fa-list-check"></i> Actions concrètes
+            </div>
+            ${actions}
+        </div>` : ''}
+        <div style="height:1px;background:var(--border);margin-top:0.9rem"></div>`;
+
+    thread.appendChild(msgEl);
+
+    if (hasChart) {
+        setTimeout(() => {
+            const ctx = document.getElementById(chartId);
+            if (!ctx) return;
+            const labels = ['Vous', 'Médiane'];
+            const vals   = [parseFloat(cv.client)||0, parseFloat(cv.moyenne_secteur)||0];
+            const colors = [badge.color, '#64748b'];
+            if (cv.top25_secteur != null) {
+                labels.push('Top 25%'); vals.push(parseFloat(cv.top25_secteur)||0); colors.push('#16a34a');
+            }
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ data: vals,
+                    backgroundColor: colors.map(c => c+'28'),
+                    borderColor: colors, borderWidth: 2, borderRadius: 5 }] },
+                options: {
+                    indexAxis: 'y', responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 11, weight: 700 } } }
+                    }
+                }
+            });
+        }, 80);
     }
 }
 
