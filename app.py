@@ -323,7 +323,9 @@ def resoudre_importances(user_id, kpis_cibles):
 # ─────────────────────────────────────────
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if current_user.is_authenticated:
+        return redirect('/dashboard')
+    return render_template('login.html')
 
 @app.route('/inscription', methods=['GET', 'POST'])
 def inscription():
