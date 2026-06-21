@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paramètres — Boussole</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+    --bg:          #F7F6F4;
+    --card-bg:     #FFFFFF;
+    --bg-alt:      #FAFAF9;
+    --text:        #18181B;
+    --text-sub:    #71717A;
+    --text-muted:  #A1A1AA;
+    --primary:         #2563EB;
+    --primary-dark:    #1B3A6B;
+    --primary-hover:   #1E4D8C;
+    --primary-light:   #DBEAFE;
+    --primary-50:      #EFF6FF;
+    --border:      #E4E4E7;
+    --border-strong:#D4D4D8;
+    --success:     #16A34A; --success-50: #F0FDF4; --success-100: #DCFCE7;
+    --warning:     #D97706; --warning-50: #FFFBEB;
+    --danger:      #DC2626; --danger-50:  #FEF2F2; --danger-100: #FEE2E2;
+    --font-heading:'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-body:   'Inter', system-ui, sans-serif;
+    --font-data:   'JetBrains Mono', monospace;
+    --shadow-sm:  0 1px 3px rgba(27,58,107,0.08), 0 1px 2px rgba(27,58,107,0.04);
+    --shadow-md:  0 4px 12px rgba(27,58,107,0.10), 0 2px 4px rgba(27,58,107,0.06);
+    --shadow-lg:  0 12px 32px rgba(27,58,107,0.12);
+    --shadow-focus: 0 0 0 3px rgba(37,99,235,0.20);
+    --radius-sm:  6px; --radius-md: 10px; --radius-lg: 14px;
+    --radius-xl:  20px; --radius-full: 9999px;
+    --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
+    --dur-fast:   120ms; --dur-base: 220ms;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); font-size: 0.9375rem; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+h1,h2,h3,h4 { font-family: var(--font-heading); }
+a { color: inherit; text-decoration: none; }
+
+/* ── NAV ── */
+.navbar {
+    background: var(--card-bg); border-bottom: 1px solid var(--border);
+    padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 200; box-shadow: var(--shadow-sm);
+}
+.brand { font-family: var(--font-heading); font-weight: 800; font-size: 1.3rem; color: var(--primary-dark); display: flex; align-items: center; gap: 0.5rem; letter-spacing: -0.02em; }
+.brand i { color: var(--primary); }
+.nav-back { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; color: var(--text-sub); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); border: 1.5px solid var(--border); transition: all var(--dur-fast); }
+.nav-back:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-50); }
+.user-chip { font-size: 0.875rem; color: var(--text-sub); display: flex; align-items: center; gap: 0.75rem; }
+.logout-btn { color: var(--text-sub); font-size: 0.87rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: var(--radius-md); border: 1.5px solid transparent; transition: all var(--dur-fast); }
+.logout-btn:hover { color: var(--danger); background: var(--danger-50); border-color: var(--danger-100); }
+
+/* ── LAYOUT ── */
+.settings-wrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 6rem; display: grid; grid-template-columns: 220px 1fr; gap: 2rem; }
+@media(max-width:900px) { .settings-wrap { grid-template-columns: 1fr; } .settings-sidebar { display: flex; flex-wrap: wrap; gap: 0.35rem; position: static; border-right: none; padding-right: 0; padding-bottom: 1rem; border-bottom: 1px solid var(--border); } }
+
+/* ── SIDEBAR ── */
+.settings-sidebar { position: sticky; top: 80px; height: fit-content; }
+.sidebar-group-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0 0.75rem; margin: 1.1rem 0 0.35rem; }
+.sidebar-group-label:first-child { margin-top: 0; }
+.sidebar-item {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.55rem 0.75rem; border-radius: var(--radius-md);
+    font-size: 0.875rem; font-weight: 600; color: var(--text-sub);
+    cursor: pointer; border: 1.5px solid transparent;
+    transition: all var(--dur-fast) var(--ease-out); white-space: nowrap;
+}
+.sidebar-item:hover { color: var(--primary); background: var(--primary-50); }
+.sidebar-item.active { color: var(--primary-dark); background: var(--primary-light); border-color: rgba(37,99,235,0.2); font-weight: 700; }
+.sidebar-item i { width: 16px; text-align: center; font-size: 0.875rem; flex-shrink: 0; }
+
+/* ── SECTIONS ── */
+.settings-section { display: none; }
+.settings-section.active { display: block; }
+.section-header { margin-bottom: 1.75rem; }
+.section-header h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+.section-header p  { color: var(--text-sub); font-size: 0.9rem; margin-top: 0.35rem; }
+
+/* ── CARDS SETTINGS ── */
+.s-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--shadow-sm); }
+.s-card-title { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+.s-card-title i { color: var(--primary); font-size: 0.95rem; }
+
+/* ── FORM FIELDS ── */
+.field-group { margin-bottom: 1.1rem; }
+.field-group:last-child { margin-bottom: 0; }
+.field-label { font-size: 0.82rem; font-weight: 700; color: var(--text-sub); margin-bottom: 0.4rem; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+.field-input {
+    width: 100%; padding: 0.72rem 1rem; border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-md); background: var(--card-bg); color: var(--text);
+    font-family: var(--font-body); font-size: 0.9375rem; outline: none;
+    transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.field-input:focus { border-color: var(--primary); box-shadow: var(--shadow-focus); }
+.field-input:disabled { background: var(--bg-alt); color: var(--text-sub); cursor: not-allowed; }
+.field-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width:600px) { .field-row { grid-template-columns: 1fr; } }
+select.field-input { cursor: pointer; }
+
+/* ── AVATAR ── */
+.avatar-section { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.avatar { width: 68px; height: 68px; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--primary-dark), var(--primary)); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; color: white; flex-shrink: 0; letter-spacing: -0.02em; }
+.avatar-info h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.2rem; }
+.avatar-info p { font-size: 0.82rem; color: var(--text-sub); }
+.avatar-btn { margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; }
+.avatar-btn:hover { text-decoration: underline; }
+
+/* ── BOUTONS ── */
+.btn-primary { background: var(--primary); color: #fff; border: 1.5px solid var(--primary); padding: 0.72rem 1.5rem; border-radius: var(--radius-md); font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all var(--dur-fast) var(--ease-out); display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--bg-alt); color: var(--text); border: 1.5px solid var(--border); padding: 0.72rem 1.5rem; border-radius: var(--radius-md); font-family: var(--font-body); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all var(--dur-fast); display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: var(--danger); color: #fff; border: 1.5px solid var(--danger); padding: 0.72rem 1.5rem; border-radius: var(--radius-md); font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all var(--dur-fast); display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-danger:hover { background: #B91C1C; }
+.btn-danger-outline { background: transparent; color: var(--danger); border: 1.5px solid var(--danger-100); padding: 0.6rem 1.25rem; border-radius: var(--radius-md); font-family: var(--font-body); font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all var(--dur-fast); display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-danger-outline:hover { background: var(--danger-50); border-color: var(--danger); }
+.btn-ghost { background: transparent; color: var(--text-sub); border: 1.5px solid var(--border); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-family: var(--font-body); font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: all var(--dur-fast); display: inline-flex; align-items: center; gap: 0.35rem; }
+.btn-ghost:hover { color: var(--text); background: var(--bg-alt); }
+.form-actions { display: flex; align-items: center; gap: 0.75rem; padding-top: 1.1rem; border-top: 1px solid var(--border); margin-top: 1.25rem; flex-wrap: wrap; }
+
+/* ── TOGGLE SWITCH ── */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid var(--border); gap: 1rem; }
+.toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+.toggle-row:first-child { padding-top: 0; }
+.toggle-info { flex: 1; }
+.toggle-label { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+.toggle-desc { font-size: 0.8rem; color: var(--text-sub); margin-top: 0.15rem; }
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+    position: absolute; inset: 0; border-radius: var(--radius-full);
+    background: var(--border-strong); cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
+}
+.toggle-track::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; top: 3px;
+    background: white; border-radius: 50%;
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--primary); }
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(20px); }
+.toggle-switch input:focus-visible + .toggle-track { box-shadow: var(--shadow-focus); }
+
+/* ── RADIO CARDS (thème) ── */
+.radio-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.radio-card { position: relative; }
+.radio-card input { position: absolute; opacity: 0; }
+.radio-card label {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.75rem 1.1rem; border: 2px solid var(--border);
+    border-radius: var(--radius-md); cursor: pointer; font-weight: 600;
+    font-size: 0.875rem; transition: all var(--dur-fast); background: var(--card-bg);
+    color: var(--text-sub);
+}
+.radio-card input:checked + label { border-color: var(--primary); color: var(--primary); background: var(--primary-50); }
+.radio-card label i { font-size: 1rem; }
+
+/* ── COLOR PICKER ── */
+.color-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.accent-presets { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.accent-dot {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2.5px solid transparent; transition: all var(--dur-fast);
+}
+.accent-dot.active, .accent-dot:hover { border-color: var(--text); transform: scale(1.15); }
+.color-picker-input { -webkit-appearance: none; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; padding: 0; box-shadow: 0 0 0 2px var(--border); background: none; }
+.color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-picker-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+/* ── KPI LIST ── */
+.kpi-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.kpi-item {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+    background: var(--bg-alt); border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); transition: all var(--dur-fast);
+}
+.kpi-item.drag-over { border-color: var(--primary); background: var(--primary-50); }
+.kpi-item[draggable="true"] { cursor: grab; }
+.kpi-item[draggable="true"]:active { cursor: grabbing; }
+.kpi-drag-handle { color: var(--text-muted); font-size: 0.9rem; flex-shrink: 0; cursor: grab; padding: 0 0.2rem; }
+.kpi-name-input { flex: 1; border: none; background: transparent; font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; color: var(--text); outline: none; min-width: 0; }
+.kpi-name-input:focus { color: var(--primary); }
+.kpi-delete-btn { color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: var(--radius-sm); transition: all var(--dur-fast); font-size: 0.9rem; flex-shrink: 0; }
+.kpi-delete-btn:hover { color: var(--danger); background: var(--danger-50); }
+
+/* ── DONNÉES — fichiers ── */
+.fichier-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.fichier-row:last-child { border-bottom: none; }
+.fichier-icon { width: 36px; height: 36px; background: var(--primary-50); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; font-size: 0.9rem; }
+.fichier-info { flex: 1; min-width: 0; }
+.fichier-name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fichier-meta { font-size: 0.75rem; color: var(--text-sub); margin-top: 0.1rem; }
+
+/* ── INTÉGRATIONS ── */
+.integration-card {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.1rem 1.25rem; background: var(--bg-alt);
+    border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+}
+.integration-logo { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0; }
+.integration-info { flex: 1; }
+.integration-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.1rem; }
+.integration-desc { font-size: 0.78rem; color: var(--text-sub); }
+.badge-connected { background: var(--success-100); color: var(--success); font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.3rem; }
+.badge-soon { background: var(--bg); color: var(--text-muted); font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: var(--radius-full); border: 1px solid var(--border); }
+.integration-card.disabled { opacity: 0.55; pointer-events: none; }
+
+/* ── FACTURATION ── */
+.plan-card {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white; border-radius: var(--radius-xl); padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem; position: relative; overflow: hidden;
+}
+.plan-card::after { content: ''; position: absolute; right: -30px; top: -30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.plan-badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; padding: 0.25rem 0.75rem; border-radius: var(--radius-full); margin-bottom: 0.6rem; }
+.plan-name { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.plan-desc { font-size: 0.85rem; opacity: 0.75; margin-top: 0.3rem; }
+.invoice-row { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+.invoice-row:last-child { border-bottom: none; }
+.invoice-amount { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ── QUOTA ── */
+.quota-bar-wrap { background: var(--border); border-radius: var(--radius-full); height: 8px; overflow: hidden; margin: 0.5rem 0; }
+.quota-bar { height: 100%; border-radius: var(--radius-full); background: var(--primary); transition: width 0.8s var(--ease-out); }
+.quota-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-sub); }
+
+/* ── 2FA ── */
+.twofa-card { background: var(--bg-alt); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 1rem 1.1rem; display: flex; align-items: center; gap: 1rem; }
+.twofa-icon { width: 40px; height: 40px; background: var(--warning-50); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--warning); font-size: 1.1rem; flex-shrink: 0; }
+
+/* ── SESSIONS ── */
+.session-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.session-row:last-child { border-bottom: none; }
+.session-icon { width: 36px; height: 36px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--text-sub); flex-shrink: 0; }
+.session-info { flex: 1; }
+.session-device { font-size: 0.875rem; font-weight: 600; }
+.session-meta { font-size: 0.75rem; color: var(--text-sub); }
+.session-current { font-size: 0.68rem; font-weight: 700; background: var(--success-100); color: var(--success); padding: 0.15rem 0.55rem; border-radius: var(--radius-full); }
+
+/* ── MODAL ── */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 500;
+    align-items: center; justify-content: center; padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: var(--card-bg); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg); padding: 2rem;
+    max-width: 440px; width: 100%;
+    animation: modalIn 0.22s var(--ease-out) both;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.93) translateY(8px); } to { opacity:1; transform: scale(1) translateY(0); } }
+.modal-icon { width: 52px; height: 52px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; margin-bottom: 1.1rem; }
+.modal-icon.danger { background: var(--danger-50); color: var(--danger); }
+.modal-icon.warning { background: var(--warning-50); color: var(--warning); }
+.modal-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; margin-bottom: 0.5rem; }
+.modal-desc { font-size: 0.9rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 1.5rem; }
+.modal-confirm-input { margin-bottom: 1.25rem; }
+.modal-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.modal-actions .btn-secondary { flex: 1; justify-content: center; }
+.modal-actions .btn-danger { flex: 1; justify-content: center; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 600; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+.toast {
+    background: var(--text); color: white; padding: 0.8rem 1.25rem;
+    border-radius: var(--radius-lg); font-size: 0.875rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.6rem; pointer-events: all;
+    box-shadow: var(--shadow-lg); max-width: 340px;
+    animation: toastIn 0.3s var(--ease-out) both;
+}
+.toast.success { background: var(--success); }
+.toast.error   { background: var(--danger); }
+.toast.warning { background: var(--warning); }
+@keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+@keyframes toastOut { to { opacity:0; transform: translateX(20px); } }
+
+/* ── DANGER ZONE ── */
+.danger-zone { border: 1.5px solid var(--danger-100); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; background: var(--danger-50); }
+.danger-zone-title { font-family: var(--font-heading); font-weight: 700; color: var(--danger); font-size: 0.9rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+.danger-zone-desc { font-size: 0.82rem; color: var(--text-sub); margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div style="display:flex;align-items:center;gap:1.25rem">
+        <a href="/dashboard" class="brand"><i class="fa-solid fa-compass"></i> Boussole</a>
+        <a href="/dashboard" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>
+    </div>
+    <div class="user-chip">
+        <span>{{ user.email }}</span>
+        <a href="/logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnexion</a>
+    </div>
+</nav>
+
+<div class="settings-wrap">
+
+    <!-- SIDEBAR -->
+    <aside class="settings-sidebar">
+        <div class="sidebar-group-label">Compte</div>
+        <div class="sidebar-item active" onclick="switchSection('profil',this)">
+            <i class="fa-solid fa-user"></i> Profil
+        </div>
+        <div class="sidebar-item" onclick="switchSection('securite',this)">
+            <i class="fa-solid fa-shield-halved"></i> Sécurité
+        </div>
+        <div class="sidebar-group-label">Interface</div>
+        <div class="sidebar-item" onclick="switchSection('preferences',this)">
+            <i class="fa-solid fa-palette"></i> Préférences
+        </div>
+        <div class="sidebar-item" onclick="switchSection('notifications',this)">
+            <i class="fa-solid fa-bell"></i> Notifications
+        </div>
+        <div class="sidebar-group-label">Données</div>
+        <div class="sidebar-item" onclick="switchSection('donnees',this)">
+            <i class="fa-solid fa-database"></i> Mes données
+        </div>
+        <div class="sidebar-item" onclick="switchSection('kpis',this)">
+            <i class="fa-solid fa-chart-line"></i> KPIs suivis
+        </div>
+        <div class="sidebar-group-label">Avancé</div>
+        <div class="sidebar-item" onclick="switchSection('integrations',this)">
+            <i class="fa-solid fa-plug"></i> Intégrations
+        </div>
+        <div class="sidebar-item" onclick="switchSection('facturation',this)">
+            <i class="fa-solid fa-credit-card"></i> Facturation
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main>
+
+        <!-- ════════════════════════════════
+             1. PROFIL
+             ════════════════════════════════ -->
+        <div class="settings-section active" id="section-profil">
+            <div class="section-header">
+                <h2>Profil utilisateur</h2>
+                <p>Informations de votre compte et de votre entreprise.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="avatar-section">
+                    <div class="avatar" id="avatarInitials">{{ (profile.nom_complet or user.email)[0].upper() }}</div>
+                    <div class="avatar-info">
+                        <h3>{{ profile.nom_complet or user.email }}</h3>
+                        <p>{{ profile.nom_entreprise or 'Entreprise non renseignée' }}</p>
+                        <span class="avatar-btn"><i class="fa-solid fa-camera"></i> Modifier la photo</span>
+                    </div>
+                </div>
+
+                <div class="s-card-title"><i class="fa-solid fa-user"></i> Informations personnelles</div>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">Nom complet</label>
+                        <input class="field-input" id="p_nom" type="text" value="{{ profile.nom_complet or '' }}" placeholder="Jean Dupont">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Email de connexion</label>
+                        <input class="field-input" id="p_email" type="email" value="{{ user.email }}">
+                    </div>
+                </div>
+
+                <div class="s-card-title" style="margin-top:1.25rem"><i class="fa-solid fa-building"></i> Entreprise</div>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">Nom de l'entreprise</label>
+                        <input class="field-input" id="p_entreprise" type="text" value="{{ profile.nom_entreprise or user.entreprise or '' }}" placeholder="Ma PME SAS">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Secteur d'activité</label>
+                        <select class="field-input" id="p_secteur">
+                            {% set secteurs = ['','Commerce de détail','Commerce de gros','BTP / Construction','Industrie manufacturière','Services aux entreprises','Santé / Médico-social','Hôtellerie / Restauration','Transport / Logistique','Immobilier','Technologies / Numérique','Agriculture','Artisanat','Autre'] %}
+                            {% for s in secteurs %}
+                            <option value="{{ s }}" {% if profile.secteur == s %}selected{% endif %}>{{ s or '— Sélectionner —' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group" style="max-width:220px">
+                    <label class="field-label">Taille de l'entreprise</label>
+                    <select class="field-input" id="p_employes">
+                        {% set tailles = ['','1-5','6-10','11-20','21-50','51-100','101-250','250+'] %}
+                        {% for t in tailles %}
+                        <option value="{{ t }}" {% if profile.nb_employes == t %}selected{% endif %}>{{ t or '— Sélectionner —' }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="field-hint">Nombre de salariés</div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="saveProfil()">
+                        <i class="fa-solid fa-check"></i> Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             2. SÉCURITÉ
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-securite">
+            <div class="section-header">
+                <h2>Sécurité &amp; Compte</h2>
+                <p>Protégez votre accès et gérez vos sessions.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-lock"></i> Changer le mot de passe</div>
+                <div class="field-group">
+                    <label class="field-label">Mot de passe actuel</label>
+                    <input class="field-input" id="sec_ancien" type="password" placeholder="••••••••">
+                </div>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">Nouveau mot de passe</label>
+                        <input class="field-input" id="sec_nouveau" type="password" placeholder="8 caractères minimum">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Confirmer le nouveau</label>
+                        <input class="field-input" id="sec_confirm" type="password" placeholder="••••••••">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="saveSecurite()">
+                        <i class="fa-solid fa-lock"></i> Mettre à jour le mot de passe
+                    </button>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-mobile-screen"></i> Authentification à deux facteurs</div>
+                <div class="twofa-card">
+                    <div class="twofa-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div style="flex:1">
+                        <div style="font-weight:700;font-size:0.9rem">A2F désactivée</div>
+                        <div style="font-size:0.8rem;color:var(--text-sub);margin-top:0.15rem">Activez l'authentification à deux facteurs pour sécuriser votre compte.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle_2fa" onchange="toast('Disponible bientôt — restez connecté !','warning'); this.checked=false;">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-display"></i> Sessions actives</div>
+                <div class="session-row">
+                    <div class="session-icon"><i class="fa-solid fa-laptop"></i></div>
+                    <div class="session-info">
+                        <div class="session-device">Navigateur actuel</div>
+                        <div class="session-meta">Connecté maintenant · France</div>
+                    </div>
+                    <span class="session-current"><i class="fa-solid fa-circle" style="font-size:0.5rem"></i> En cours</span>
+                </div>
+                <div style="margin-top:1rem">
+                    <button class="btn-danger-outline" onclick="openModal('modal-deconnexion')">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnecter toutes les sessions
+                    </button>
+                </div>
+            </div>
+
+            <div class="danger-zone">
+                <div class="danger-zone-title"><i class="fa-solid fa-triangle-exclamation"></i> Zone de danger</div>
+                <div class="danger-zone-desc">La suppression de votre compte est irréversible. Toutes vos données (analyses, périodes, KPIs) seront définitivement effacées.</div>
+                <button class="btn-danger" onclick="openModal('modal-supprimer-compte')">
+                    <i class="fa-solid fa-trash"></i> Supprimer mon compte
+                </button>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             3. PRÉFÉRENCES
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-preferences">
+            <div class="section-header">
+                <h2>Préférences d'affichage</h2>
+                <p>Personnalisez l'apparence et le comportement de Boussole.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-sun"></i> Thème</div>
+                <div class="radio-cards">
+                    <div class="radio-card">
+                        <input type="radio" name="theme" id="theme_light" value="light" {% if prefs.theme == 'light' %}checked{% endif %}>
+                        <label for="theme_light"><i class="fa-solid fa-sun"></i> Clair</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="theme" id="theme_dark" value="dark" {% if prefs.theme == 'dark' %}checked{% endif %}>
+                        <label for="theme_dark"><i class="fa-solid fa-moon"></i> Sombre</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="theme" id="theme_auto" value="auto" {% if prefs.theme == 'auto' %}checked{% endif %}>
+                        <label for="theme_auto"><i class="fa-solid fa-circle-half-stroke"></i> Automatique</label>
+                    </div>
+                </div>
+                <div class="field-hint" style="margin-top:0.75rem">Le mode sombre sera disponible prochainement.</div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-droplet"></i> Couleur d'accent</div>
+                <div class="color-row">
+                    <div class="accent-presets" id="accentPresets">
+                        <div class="accent-dot" style="background:#2563EB" data-color="#2563EB" onclick="setAccent('#2563EB',this)"></div>
+                        <div class="accent-dot" style="background:#7C3AED" data-color="#7C3AED" onclick="setAccent('#7C3AED',this)"></div>
+                        <div class="accent-dot" style="background:#0D9488" data-color="#0D9488" onclick="setAccent('#0D9488',this)"></div>
+                        <div class="accent-dot" style="background:#DC2626" data-color="#DC2626" onclick="setAccent('#DC2626',this)"></div>
+                        <div class="accent-dot" style="background:#D97706" data-color="#D97706" onclick="setAccent('#D97706',this)"></div>
+                        <div class="accent-dot" style="background:#18181B" data-color="#18181B" onclick="setAccent('#18181B',this)"></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text-sub)">
+                        <input type="color" class="color-picker-input" id="accentCustom" value="{{ prefs.couleur_accent }}" oninput="setAccent(this.value,null)">
+                        Personnalisé
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-globe"></i> Localisation</div>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">Langue</label>
+                        <select class="field-input" id="pref_langue">
+                            <option value="fr" {% if prefs.langue == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+                            <option value="en" {% if prefs.langue == 'en' %}selected{% endif %}>🇬🇧 English</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Format de date</label>
+                        <select class="field-input" id="pref_format_date">
+                            <option value="DD/MM/YYYY" {% if prefs.format_date == 'DD/MM/YYYY' %}selected{% endif %}>JJ/MM/AAAA (31/12/2024)</option>
+                            <option value="MM/DD/YYYY" {% if prefs.format_date == 'MM/DD/YYYY' %}selected{% endif %}>MM/JJ/AAAA (12/31/2024)</option>
+                            <option value="YYYY-MM-DD" {% if prefs.format_date == 'YYYY-MM-DD' %}selected{% endif %}>ISO 8601 (2024-12-31)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group" style="max-width:180px">
+                    <label class="field-label">Devise</label>
+                    <select class="field-input" id="pref_devise">
+                        <option value="EUR" {% if prefs.devise == 'EUR' %}selected{% endif %}>€ Euro</option>
+                        <option value="USD" {% if prefs.devise == 'USD' %}selected{% endif %}>$ Dollar US</option>
+                        <option value="GBP" {% if prefs.devise == 'GBP' %}selected{% endif %}>£ Livre sterling</option>
+                        <option value="CHF" {% if prefs.devise == 'CHF' %}selected{% endif %}>CHF Franc suisse</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="savePreferences()">
+                        <i class="fa-solid fa-check"></i> Enregistrer les préférences
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             4. NOTIFICATIONS
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-notifications">
+            <div class="section-header">
+                <h2>Notifications</h2>
+                <p>Choisissez quand et comment Boussole vous contacte.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-envelope"></i> Alertes par email</div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Nouvelle analyse terminée</div>
+                        <div class="toggle-desc">Recevez un email à chaque fin d'analyse économétrique.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif_analyse" {% if prefs.notif_analyse %}checked{% endif %} onchange="saveNotifications()">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Score de santé en baisse</div>
+                        <div class="toggle-desc">Soyez alerté si votre score baisse de plus d'une note (ex. B → C).</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif_score" {% if prefs.notif_score %}checked{% endif %} onchange="saveNotifications()">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <div class="toggle-label">Rapport hebdomadaire</div>
+                        <div class="toggle-desc">Résumé automatique chaque lundi matin avec vos indicateurs clés.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif_rapport" {% if prefs.notif_rapport %}checked{% endif %} onchange="saveNotifications()">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-clock"></i> Fréquence des résumés</div>
+                <div class="radio-cards">
+                    <div class="radio-card">
+                        <input type="radio" name="freq" id="freq_quotidien" value="quotidien" {% if prefs.freq_resume == 'quotidien' %}checked{% endif %} onchange="saveNotifications()">
+                        <label for="freq_quotidien"><i class="fa-solid fa-sun"></i> Quotidien</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="freq" id="freq_hebdo" value="hebdomadaire" {% if prefs.freq_resume == 'hebdomadaire' %}checked{% endif %} onchange="saveNotifications()">
+                        <label for="freq_hebdo"><i class="fa-solid fa-calendar-week"></i> Hebdomadaire</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="freq" id="freq_jamais" value="jamais" {% if prefs.freq_resume == 'jamais' %}checked{% endif %} onchange="saveNotifications()">
+                        <label for="freq_jamais"><i class="fa-solid fa-bell-slash"></i> Jamais</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             5. DONNÉES
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-donnees">
+            <div class="section-header">
+                <h2>Gestion des données</h2>
+                <p>Export RGPD, historique et stockage.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-hard-drive"></i> Stockage utilisé</div>
+                <div class="quota-bar-wrap">
+                    <div class="quota-bar" style="width:{{ [((nb_valeurs / 5000) * 100)|int, 100]|min }}%"></div>
+                </div>
+                <div class="quota-meta">
+                    <span><strong>{{ nb_valeurs }}</strong> valeurs KPI enregistrées</span>
+                    <span>{{ periodes|length }} période{% if periodes|length > 1 %}s{% endif %}</span>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-calendar-days"></i> Historique des périodes</div>
+                {% if periodes %}
+                    {% for p in periodes[:10] %}
+                    <div class="fichier-row">
+                        <div class="fichier-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div class="fichier-info">
+                            <div class="fichier-name">{{ p.label_periode }}</div>
+                            <div class="fichier-meta">{{ p.date_upload.strftime('%d/%m/%Y à %H:%M') if p.date_upload else 'Date inconnue' }} · Note {{ p.note or '?' }}</div>
+                        </div>
+                        <span style="font-family:var(--font-data);font-size:0.88rem;font-weight:700;color:var(--primary)">{{ p.score|round(0)|int if p.score else '—' }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if periodes|length > 10 %}
+                    <div style="text-align:center;padding-top:0.75rem;font-size:0.82rem;color:var(--text-sub)">… et {{ periodes|length - 10 }} autre(s)</div>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:0.9rem">
+                        <i class="fa-solid fa-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.5rem"></i>
+                        Aucune donnée importée pour l'instant
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-file-export"></i> Export de vos données</div>
+                <p style="font-size:0.875rem;color:var(--text-sub);margin-bottom:1.1rem;line-height:1.6">
+                    Téléchargez l'intégralité de vos données au format ZIP (CSV + JSON) conformément au RGPD. Contient : profil, préférences, périodes, valeurs KPI.
+                </p>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+                    <a href="/parametres/export_donnees" class="btn-primary" style="text-decoration:none">
+                        <i class="fa-solid fa-download"></i> Télécharger mon export
+                    </a>
+                </div>
+            </div>
+
+            <div class="danger-zone">
+                <div class="danger-zone-title"><i class="fa-solid fa-trash"></i> Supprimer l'historique</div>
+                <div class="danger-zone-desc">Efface toutes les périodes importées et les valeurs KPI. Votre compte est conservé.</div>
+                <button class="btn-danger" onclick="openModal('modal-supprimer-historique')">
+                    <i class="fa-solid fa-trash"></i> Supprimer l'historique
+                </button>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             6. KPIs SUIVIS
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-kpis">
+            <div class="section-header">
+                <h2>KPIs suivis</h2>
+                <p>Réorganisez, renommez ou supprimez les indicateurs de votre tableau de bord.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-list-check"></i> {{ kpis|length }} KPI{% if kpis|length > 1 %}s{% endif %} actif{% if kpis|length > 1 %}s{% endif %}</div>
+                <div style="font-size:0.8rem;color:var(--text-sub);margin-bottom:1rem;display:flex;align-items:center;gap:0.4rem">
+                    <i class="fa-solid fa-grip-dots-vertical"></i>
+                    Glissez-déposez pour réordonner · Cliquez sur un nom pour le modifier
+                </div>
+                {% if kpis %}
+                <div class="kpi-list" id="kpiList">
+                    {% for kpi in kpis %}
+                    <div class="kpi-item" draggable="true" data-id="{{ kpi.id }}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropKpi(event)" ondragleave="dragLeave(event)">
+                        <span class="kpi-drag-handle"><i class="fa-solid fa-grip-dots-vertical"></i></span>
+                        <input class="kpi-name-input" type="text" value="{{ kpi.nom }}"
+                               onblur="renommerKpi({{ kpi.id }}, this.value)"
+                               onkeydown="if(event.key==='Enter')this.blur()">
+                        <button class="kpi-delete-btn" onclick="supprimerKpi({{ kpi.id }}, this)" title="Supprimer">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem">
+                    <i class="fa-solid fa-chart-line" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;color:var(--border)"></i>
+                    Aucun KPI suivi. Importez des données depuis le tableau de bord.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             7. INTÉGRATIONS
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-integrations">
+            <div class="section-header">
+                <h2>Intégrations</h2>
+                <p>Connectez vos outils externes pour synchroniser automatiquement vos données.</p>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-plug"></i> Sources de données</div>
+
+                <div class="integration-card">
+                    <div class="integration-logo" style="background:#E8F5E9;color:#1B873B"><i class="fa-brands fa-google"></i></div>
+                    <div class="integration-info">
+                        <div class="integration-name">Google Sheets</div>
+                        <div class="integration-desc">Importez automatiquement vos tableaux de bord Google Sheets.</div>
+                    </div>
+                    <button class="btn-ghost" onclick="toast('Connexion Google Sheets — disponible bientôt !','warning')">
+                        <i class="fa-solid fa-link"></i> Connecter
+                    </button>
+                </div>
+
+                <div class="integration-card disabled">
+                    <div class="integration-logo" style="background:#FFF3E0;color:#E65100;font-size:1rem;font-weight:800">QB</div>
+                    <div class="integration-info">
+                        <div class="integration-name">QuickBooks</div>
+                        <div class="integration-desc">Synchronisez votre comptabilité en temps réel.</div>
+                    </div>
+                    <span class="badge-soon"><i class="fa-solid fa-clock"></i> Bientôt</span>
+                </div>
+
+                <div class="integration-card disabled">
+                    <div class="integration-logo" style="background:#E3F2FD;color:#1565C0;font-size:0.9rem;font-weight:800">PL</div>
+                    <div class="integration-info">
+                        <div class="integration-name">Pennylane</div>
+                        <div class="integration-desc">Importez vos données comptables françaises.</div>
+                    </div>
+                    <span class="badge-soon"><i class="fa-solid fa-clock"></i> Bientôt</span>
+                </div>
+
+                <div class="integration-card disabled">
+                    <div class="integration-logo" style="background:#E8EAF6;color:#3949AB"><i class="fa-brands fa-salesforce"></i></div>
+                    <div class="integration-info">
+                        <div class="integration-name">Salesforce</div>
+                        <div class="integration-desc">Connectez votre CRM pour analyser le pipeline commercial.</div>
+                    </div>
+                    <span class="badge-soon"><i class="fa-solid fa-clock"></i> Bientôt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             8. FACTURATION
+             ════════════════════════════════ -->
+        <div class="settings-section" id="section-facturation">
+            <div class="section-header">
+                <h2>Facturation</h2>
+                <p>Votre abonnement et vos factures.</p>
+            </div>
+
+            <div class="plan-card">
+                <div class="plan-badge">Plan actuel</div>
+                <div class="plan-name">Gratuit</div>
+                <div class="plan-desc">Accès complet pendant la phase bêta · Aucune carte requise</div>
+                <button onclick="toast('Offres Pro disponibles prochainement — restez connecté !','warning')" style="margin-top:1.1rem;background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.35);padding:0.6rem 1.25rem;border-radius:var(--radius-md);font-family:var(--font-body);font-weight:700;font-size:0.875rem;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem">
+                    <i class="fa-solid fa-rocket"></i> Passer en Pro
+                </button>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-file-invoice"></i> Historique des factures</div>
+                <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem">
+                    <i class="fa-solid fa-receipt" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;color:var(--border)"></i>
+                    Aucune facture pour l'instant (plan gratuit)
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-title"><i class="fa-solid fa-credit-card"></i> Méthode de paiement</div>
+                <div style="font-size:0.875rem;color:var(--text-sub);line-height:1.6">
+                    Aucune méthode de paiement enregistrée. Ajoutez une carte lors du passage en plan Pro.
+                </div>
+                <div style="margin-top:1rem">
+                    <button class="btn-ghost" onclick="toast('Disponible avec le plan Pro','warning')">
+                        <i class="fa-solid fa-plus"></i> Ajouter une carte
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ── MODALES ── -->
+<div class="modal-overlay" id="modal-supprimer-compte">
+    <div class="modal-box">
+        <div class="modal-icon danger"><i class="fa-solid fa-trash"></i></div>
+        <div class="modal-title">Supprimer mon compte</div>
+        <div class="modal-desc">Cette action est <strong>irréversible</strong>. Toutes vos données seront définitivement supprimées : analyses, périodes, KPIs, préférences.</div>
+        <div class="modal-confirm-input">
+            <label class="field-label">Tapez <strong>SUPPRIMER</strong> pour confirmer</label>
+            <input class="field-input" id="confirm_delete_input" type="text" placeholder="SUPPRIMER">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('modal-supprimer-compte')">Annuler</button>
+            <button class="btn-danger" onclick="supprimerCompte()"><i class="fa-solid fa-trash"></i> Supprimer définitivement</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-supprimer-historique">
+    <div class="modal-box">
+        <div class="modal-icon warning"><i class="fa-solid fa-broom"></i></div>
+        <div class="modal-title">Supprimer l'historique</div>
+        <div class="modal-desc">Cette action supprimera toutes les périodes importées et les valeurs KPI associées. Votre compte et vos préférences seront conservés.</div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('modal-supprimer-historique')">Annuler</button>
+            <button class="btn-danger" onclick="supprimerHistorique()"><i class="fa-solid fa-trash"></i> Supprimer l'historique</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-deconnexion">
+    <div class="modal-box">
+        <div class="modal-icon warning"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
+        <div class="modal-title">Déconnecter toutes les sessions</div>
+        <div class="modal-desc">Vous serez déconnecté de tous les appareils. Vous devrez vous reconnecter sur chaque appareil.</div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('modal-deconnexion')">Annuler</button>
+            <button class="btn-danger" onclick="closeModal('modal-deconnexion');window.location='/logout'"><i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnecter</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── NAVIGATION SECTIONS ──────────────────────────────────────
+function switchSection(id, el) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    if (el) el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    const icon = { success: 'circle-check', error: 'circle-xmark', warning: 'triangle-exclamation' }[type] || 'circle-check';
+    t.innerHTML = `<i class="fa-solid fa-${icon}"></i> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => {
+        t.style.animation = 'toastOut 0.3s var(--ease-out) forwards';
+        setTimeout(() => t.remove(), 300);
+    }, 3500);
+}
+
+// ── AJAX HELPER ──────────────────────────────────────────────
+function apiPost(url, data, successMsg) {
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) toast(successMsg || 'Enregistré ✓', 'success');
+        else toast(d.error || 'Une erreur est survenue', 'error');
+        return d;
+    })
+    .catch(() => toast('Erreur de connexion', 'error'));
+}
+
+// ── MODALES ──────────────────────────────────────────────────
+function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+});
+
+// ── PROFIL ───────────────────────────────────────────────────
+function saveProfil() {
+    apiPost('/parametres/profil', {
+        nom_complet:    document.getElementById('p_nom').value,
+        email:          document.getElementById('p_email').value,
+        nom_entreprise: document.getElementById('p_entreprise').value,
+        secteur:        document.getElementById('p_secteur').value,
+        nb_employes:    document.getElementById('p_employes').value,
+    }, 'Profil enregistré ✓').then(d => {
+        if (d && d.success) {
+            const initiales = document.getElementById('p_nom').value.trim();
+            if (initiales) document.getElementById('avatarInitials').textContent = initiales[0].toUpperCase();
+        }
+    });
+}
+
+// ── SÉCURITÉ ─────────────────────────────────────────────────
+function saveSecurite() {
+    const a = document.getElementById('sec_ancien').value;
+    const n = document.getElementById('sec_nouveau').value;
+    const c = document.getElementById('sec_confirm').value;
+    if (!a || !n || !c) { toast('Remplissez tous les champs', 'error'); return; }
+    apiPost('/parametres/securite', { ancien_mdp: a, nouveau_mdp: n, confirm_mdp: c }, 'Mot de passe mis à jour ✓')
+    .then(d => { if (d && d.success) { document.getElementById('sec_ancien').value=''; document.getElementById('sec_nouveau').value=''; document.getElementById('sec_confirm').value=''; } });
+}
+
+// ── PRÉFÉRENCES ──────────────────────────────────────────────
+function savePreferences() {
+    const theme = document.querySelector('input[name="theme"]:checked')?.value || 'light';
+    apiPost('/parametres/preferences', {
+        theme,
+        couleur_accent: document.getElementById('accentCustom').value,
+        langue:       document.getElementById('pref_langue').value,
+        format_date:  document.getElementById('pref_format_date').value,
+        devise:       document.getElementById('pref_devise').value,
+    }, 'Préférences enregistrées ✓');
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────────
+function saveNotifications() {
+    const freq = document.querySelector('input[name="freq"]:checked')?.value || 'hebdomadaire';
+    apiPost('/parametres/notifications', {
+        notif_analyse: document.getElementById('notif_analyse').checked,
+        notif_score:   document.getElementById('notif_score').checked,
+        notif_rapport: document.getElementById('notif_rapport').checked,
+        freq_resume:   freq,
+    }, 'Préférences de notification enregistrées ✓');
+}
+
+// ── ACCENT COLOR ─────────────────────────────────────────────
+function setAccent(color, el) {
+    document.querySelectorAll('.accent-dot').forEach(d => d.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.getElementById('accentCustom').value = color;
+    document.documentElement.style.setProperty('--primary', color);
+    // Sauvegarde auto
+    apiPost('/parametres/preferences', {
+        theme: document.querySelector('input[name="theme"]:checked')?.value || 'light',
+        couleur_accent: color,
+        langue: document.getElementById('pref_langue').value,
+        format_date: document.getElementById('pref_format_date').value,
+        devise: document.getElementById('pref_devise').value,
+    }, 'Couleur enregistrée ✓');
+}
+// Init accent actif
+(function() {
+    const current = '{{ prefs.couleur_accent }}';
+    document.querySelectorAll('.accent-dot').forEach(d => {
+        if (d.dataset.color === current) d.classList.add('active');
+    });
+    document.documentElement.style.setProperty('--primary', current);
+})();
+
+// ── KPIs — DRAG & DROP ───────────────────────────────────────
+let dragSrc = null;
+function dragStart(e) { dragSrc = e.currentTarget; e.dataTransfer.effectAllowed = 'move'; }
+function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dropKpi(e) {
+    e.preventDefault();
+    const target = e.currentTarget;
+    target.classList.remove('drag-over');
+    if (dragSrc === target) return;
+    const list = document.getElementById('kpiList');
+    const items = [...list.children];
+    const fromIdx = items.indexOf(dragSrc);
+    const toIdx   = items.indexOf(target);
+    if (fromIdx < toIdx) list.insertBefore(dragSrc, target.nextSibling);
+    else                  list.insertBefore(dragSrc, target);
+    sauvegarderOrdreKpis();
+}
+function sauvegarderOrdreKpis() {
+    const ordre = [...document.querySelectorAll('.kpi-item')].map(el => parseInt(el.dataset.id));
+    apiPost('/parametres/kpis/ordre', { ordre }, 'Ordre enregistré ✓');
+}
+
+// ── KPIs — RENOMMER ──────────────────────────────────────────
+function renommerKpi(id, nom) {
+    if (!nom.trim()) return;
+    apiPost('/parametres/kpis/renommer', { id, nom }, 'KPI renommé ✓');
+}
+
+// ── KPIs — SUPPRIMER ─────────────────────────────────────────
+function supprimerKpi(id, btn) {
+    if (!confirm('Supprimer ce KPI du suivi ?')) return;
+    fetch('/parametres/kpis/' + id, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            btn.closest('.kpi-item').remove();
+            toast('KPI supprimé', 'success');
+        } else toast(d.error, 'error');
+    });
+}
+
+// ── SUPPRIMER HISTORIQUE ─────────────────────────────────────
+function supprimerHistorique() {
+    apiPost('/parametres/supprimer_historique', {}, 'Historique supprimé').then(d => {
+        if (d && d.success) { closeModal('modal-supprimer-historique'); location.reload(); }
+    });
+}
+
+// ── SUPPRIMER COMPTE ─────────────────────────────────────────
+function supprimerCompte() {
+    const val = document.getElementById('confirm_delete_input').value;
+    if (val !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'error'); return; }
+    fetch('/parametres/supprimer_compte', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) { toast('Compte supprimé. Au revoir !', 'success'); setTimeout(() => window.location = '/login', 1500); }
+        else toast(d.error, 'error');
+    });
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 import os
 import io
 import json
+import zipfile
+import tempfile
 import warnings
 import numpy as np
 import pandas as pd
@@ -73,6 +75,27 @@ class ValeurKpi(db.Model):
     nom_kpi = db.Column(db.String(150), nullable=False)
     valeur = db.Column(db.Float)
 
+class UserProfile(db.Model):
+    id            = db.Column(db.Integer, primary_key=True)
+    user_id       = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    nom_complet   = db.Column(db.String(200), default='')
+    nom_entreprise= db.Column(db.String(200), default='')
+    secteur       = db.Column(db.String(100), default='')
+    nb_employes   = db.Column(db.String(50),  default='')
+
+class UserPreferences(db.Model):
+    id               = db.Column(db.Integer, primary_key=True)
+    user_id          = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    theme            = db.Column(db.String(20),  default='light')
+    couleur_accent   = db.Column(db.String(7),   default='#2563EB')
+    langue           = db.Column(db.String(5),   default='fr')
+    format_date      = db.Column(db.String(20),  default='DD/MM/YYYY')
+    devise           = db.Column(db.String(5),   default='EUR')
+    notif_analyse    = db.Column(db.Boolean,     default=True)
+    notif_score      = db.Column(db.Boolean,     default=True)
+    notif_rapport    = db.Column(db.Boolean,     default=False)
+    freq_resume      = db.Column(db.String(20),  default='hebdomadaire')
+
 
 # ─────────────────────────────────────────
 # UTILITAIRES
@@ -105,10 +128,47 @@ def lire_fichier(file):
     else:
         raise ValueError('Format non supporté.')
 
+_MOIS_MAP = {
+    'janvier': 1, 'février': 2, 'fevrier': 2, 'mars': 3, 'avril': 4,
+    'mai': 5, 'juin': 6, 'juillet': 7, 'août': 8, 'aout': 8,
+    'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12, 'decembre': 12,
+    'jan': 1, 'fév': 2, 'fev': 2, 'mar': 3, 'avr': 4,
+    'jun': 6, 'jul': 7, 'aoû': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'déc': 12, 'dec': 12,
+}
+
+def _parse_periode(val):
+    """Parse une valeur en datetime — gère les formats français et standard."""
+    if val is None or (isinstance(val, float) and np.isnan(val)):
+        return None
+    s = str(val).strip().lower()
+    if not s:
+        return None
+    # "Janvier 2024", "Janvier-2024", "janv. 2024"
+    for sep in (' ', '-', '/'):
+        parts = [p.strip().rstrip('.') for p in s.split(sep)]
+        if len(parts) == 2:
+            a, b = parts
+            if a in _MOIS_MAP and b.isdigit() and len(b) == 4:
+                return datetime(int(b), _MOIS_MAP[a], 1)
+            if b in _MOIS_MAP and a.isdigit() and len(a) == 4:
+                return datetime(int(a), _MOIS_MAP[b], 1)
+    # "01/2024", "2024-01"
+    for fmt in ('%m/%Y', '%Y-%m', '%m-%Y', '%Y/%m'):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            pass
+    # Parseur pandas en dernier recours
+    try:
+        return pd.to_datetime(val, dayfirst=True).to_pydatetime()
+    except Exception:
+        return None
+
 def detecter_date(df):
+    """Retourne le nom de la colonne la plus probable comme axe temporel."""
     for c in df.columns:
         try:
-            parsed = pd.to_datetime(df[c], errors='coerce')
+            parsed = df[c].apply(_parse_periode)
             if parsed.notna().sum() > len(df) * 0.5:
                 return c
         except Exception:
@@ -596,6 +656,50 @@ def evolution_preview():
 
 
 # ─────────────────────────────────────────
+# ÉVOLUTION — HELPERS
+# ─────────────────────────────────────────
+
+_MOIS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+
+def _label_from_date(dt):
+    return f"{_MOIS_FR[dt.month - 1]} {dt.year}"
+
+
+def _generer_resume_ia(note, score, kpis_valeurs, kpis_precedents):
+    kpis_str = ', '.join(f"{k}={v}" for k, v in kpis_valeurs.items())
+    prev_str = (', '.join(f"{k}={v}" for k, v in kpis_precedents.items())
+                if kpis_precedents else 'première période')
+    try:
+        client_groq = groq.Groq(api_key=GROQ_API_KEY)
+        prompt = f"""Tu es consultant Boussole. Analyse la période pour un dirigeant de PME.
+Note obtenue : {note} ({score}/100). KPIs actuels : {kpis_str}. Période précédente : {prev_str}.
+Réponds UNIQUEMENT en JSON valide avec exactement ces 4 champs :
+- "resume" : synthèse en 2 phrases pour le dirigeant
+- "signal_fort" : le fait le plus marquant de la période, chiffré (1 phrase)
+- "alerte" : un risque ou point de vigilance, ou null si tout va bien (1 phrase ou null)
+- "conseil" : 1 action concrète et chiffrée à prendre ce mois-ci (1 phrase)
+Exemple de format : {{"resume":"...","signal_fort":"...","alerte":null,"conseil":"..."}}"""
+        resp = client_groq.chat.completions.create(
+            model='llama-3.3-70b-versatile',
+            response_format={"type": "json_object"},
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        parsed = json.loads(resp.choices[0].message.content)
+        return json.dumps({
+            'resume': parsed.get('resume', ''),
+            'signal_fort': parsed.get('signal_fort', None),
+            'alerte': parsed.get('alerte', None),
+            'conseil': parsed.get('conseil', None)
+        }, ensure_ascii=False)
+    except Exception:
+        return json.dumps({
+            'resume': f"Période enregistrée avec une note {note} ({score}/100).",
+            'signal_fort': None, 'alerte': None, 'conseil': None
+        }, ensure_ascii=False)
+
+
+# ─────────────────────────────────────────
 # ÉVOLUTION — UPLOAD + SAUVEGARDE
 # ─────────────────────────────────────────
 @app.route('/evolution_upload', methods=['POST'])
@@ -604,7 +708,6 @@ def evolution_upload():
     try:
         file = request.files.get('file')
         colonnes_select = request.form.getlist('colonnes')
-        label_periode = request.form.get('label_periode', '').strip()
         sauvegarder_kpis = request.form.get('sauvegarder_kpis', 'true') == 'true'
 
         if not file or file.filename == '':
@@ -619,96 +722,147 @@ def evolution_upload():
         df.columns = [str(c).strip() for c in df.columns]
         numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
         cols_valides = [c for c in colonnes_select if c in numeric_cols]
-
         if not cols_valides:
             return jsonify({'success': False, 'error': 'Aucun KPI numérique valide.'})
 
-        if not label_periode:
-            label_periode = datetime.utcnow().strftime('%B %Y')
+        # ── 1. Index des périodes existantes (nécessaire avant de construire lignes) ─
+        periodes_par_label = {
+            p.label_periode: p
+            for p in PeriodeEntreprise.query.filter_by(user_id=current_user.id).all()
+        }
+        existing_labels = set(periodes_par_label.keys())
 
-        kpis_valeurs = {}
-        for col in cols_valides:
-            serie = df[col].dropna()
-            if len(serie) > 0:
-                kpis_valeurs[col] = round(float(serie.iloc[-1]), 2)
+        # ── 2. Construire la liste de lignes (date, label, kpis) ────────
+        date_col = detecter_date(df)
+        lignes = []  # [(datetime, label_str, {kpi: val})]
 
-        periode_precedente = PeriodeEntreprise.query.filter_by(
-            user_id=current_user.id
+        # Exclure la colonne date des KPIs (peut être lue comme float en Excel)
+        if date_col and date_col in cols_valides:
+            cols_valides = [c for c in cols_valides if c != date_col]
+        if not cols_valides:
+            return jsonify({'success': False, 'error': 'Aucun KPI numérique valide (hors colonne date).'})
+
+        if date_col:
+            # Parser flexible : gère "Janvier 2024", "01/2024", dates standard…
+            df['_dt'] = df[date_col].apply(_parse_periode)
+            df_sorted = df.dropna(subset=['_dt']).sort_values('_dt').reset_index(drop=True)
+            for _, row in df_sorted.iterrows():
+                dt = row['_dt']
+                if not isinstance(dt, datetime):
+                    dt = dt.to_pydatetime() if hasattr(dt, 'to_pydatetime') else datetime(dt.year, dt.month, dt.day)
+                label = _label_from_date(dt)
+                kpis = {}
+                for col in cols_valides:
+                    val = row.get(col)
+                    if val is not None and pd.notna(val) and not isinstance(val, (pd.Timestamp, datetime)):
+                        try:
+                            kpis[col] = round(float(val), 2)
+                        except (TypeError, ValueError):
+                            pass
+                if kpis:
+                    lignes.append((dt, label, kpis))
+            df.drop(columns=['_dt'], inplace=True, errors='ignore')
+            # Dédoublonner par label : même mois → garder la dernière ligne
+            seen: dict = {}
+            for entry in lignes:
+                seen[entry[1]] = entry
+            lignes = list(seen.values())
+        else:
+            # Pas de colonne date : une période par upload avec label unique
+            dt = datetime.utcnow()
+            base_label = _label_from_date(dt)
+            label = base_label
+            counter = 2
+            while label in existing_labels:
+                label = f"{base_label} ({counter})"
+                counter += 1
+            kpis = {col: round(float(df[col].dropna().iloc[-1]), 2)
+                    for col in cols_valides if len(df[col].dropna()) > 0}
+            if kpis:
+                lignes.append((dt, label, kpis))
+
+        if not lignes:
+            return jsonify({'success': False, 'error': 'Aucune donnée valide trouvée.'})
+
+        # ── 3. KPIs de référence : période DB antérieure au premier import ─
+        premiere_date = lignes[0][0]
+        periode_ref = PeriodeEntreprise.query.filter(
+            PeriodeEntreprise.user_id == current_user.id,
+            PeriodeEntreprise.date_upload < premiere_date
         ).order_by(PeriodeEntreprise.date_upload.desc()).first()
 
-        kpis_precedents = {}
-        if periode_precedente:
-            valeurs_prec = ValeurKpi.query.filter_by(
-                periode_id=periode_precedente.id,
-                user_id=current_user.id
-            ).all()
-            kpis_precedents = {v.nom_kpi: v.valeur for v in valeurs_prec}
+        kpis_prev: dict = {}
+        if periode_ref:
+            kpis_prev = {v.nom_kpi: v.valeur for v in
+                         ValeurKpi.query.filter_by(
+                             periode_id=periode_ref.id,
+                             user_id=current_user.id).all()}
 
-        score, note = calculer_score(kpis_valeurs, kpis_precedents)
+        derniere_periode = None
 
-        resume_ia = ''
-        try:
-            client_groq = groq.Groq(api_key=GROQ_API_KEY)
-            kpis_str = ', '.join([f"{k}={v}" for k, v in kpis_valeurs.items()])
-            prev_str = ', '.join([f"{k}={v}" for k, v in kpis_precedents.items()]) if kpis_precedents else 'première période'
-            prompt = f"""Tu es consultant Boussole. Analyse la période pour un dirigeant de PME.
-Note obtenue : {note} ({score}/100). KPIs actuels : {kpis_str}. Période précédente : {prev_str}.
-Réponds UNIQUEMENT en JSON valide avec exactement ces 4 champs :
-- "resume" : synthèse en 2 phrases pour le dirigeant
-- "signal_fort" : le fait le plus marquant de la période, chiffré (1 phrase)
-- "alerte" : un risque ou point de vigilance, ou null si tout va bien (1 phrase ou null)
-- "conseil" : 1 action concrète et chiffrée à prendre ce mois-ci (1 phrase)
-Exemple de format : {{"resume":"...","signal_fort":"...","alerte":null,"conseil":"..."}}"""
-            resp = client_groq.chat.completions.create(
-                model='llama-3.3-70b-versatile',
-                response_format={"type": "json_object"},
-                messages=[{'role': 'user', 'content': prompt}]
-            )
-            parsed_ia = json.loads(resp.choices[0].message.content)
-            resume_ia = json.dumps({
-                'resume': parsed_ia.get('resume', ''),
-                'signal_fort': parsed_ia.get('signal_fort', None),
-                'alerte': parsed_ia.get('alerte', None),
-                'conseil': parsed_ia.get('conseil', None)
-            }, ensure_ascii=False)
-        except Exception:
-            resume_ia = json.dumps({'resume': f"Période enregistrée avec une note {note}.", 'signal_fort': None, 'alerte': None, 'conseil': None}, ensure_ascii=False)
+        for i, (dt, label, kpis_valeurs) in enumerate(lignes):
+            score, note = calculer_score(kpis_valeurs, kpis_prev or None)
+            is_last = (i == len(lignes) - 1)
 
-        nouvelle_periode = PeriodeEntreprise(
-            user_id=current_user.id,
-            date_upload=datetime.utcnow(),
-            label_periode=label_periode,
-            score=score,
-            note=note,
-            resume_ia=resume_ia
-        )
-        db.session.add(nouvelle_periode)
-        db.session.flush()
+            # Résumé IA uniquement pour la dernière période (évite N appels API)
+            if is_last:
+                resume_ia = _generer_resume_ia(note, score, kpis_valeurs, kpis_prev)
+            else:
+                resume_ia = json.dumps({
+                    'resume': f"Période {label} — note {note} ({score}/100).",
+                    'signal_fort': None, 'alerte': None, 'conseil': None
+                }, ensure_ascii=False)
 
-        for nom, valeur in kpis_valeurs.items():
-            val_kpi = ValeurKpi(
-                periode_id=nouvelle_periode.id,
-                user_id=current_user.id,
-                nom_kpi=nom,
-                valeur=valeur
-            )
-            db.session.add(val_kpi)
+            # UPSERT — update si la période existe déjà, insert sinon
+            if label in periodes_par_label:
+                p = periodes_par_label[label]
+                p.score = score
+                p.note = note
+                p.resume_ia = resume_ia
+                p.date_upload = dt
+                ValeurKpi.query.filter_by(
+                    periode_id=p.id, user_id=current_user.id).delete()
+            else:
+                p = PeriodeEntreprise(
+                    user_id=current_user.id,
+                    date_upload=dt,
+                    label_periode=label,
+                    score=score,
+                    note=note,
+                    resume_ia=resume_ia
+                )
+                db.session.add(p)
+                db.session.flush()
+                periodes_par_label[label] = p
 
+            for nom, valeur in kpis_valeurs.items():
+                db.session.add(ValeurKpi(
+                    periode_id=p.id,
+                    user_id=current_user.id,
+                    nom_kpi=nom,
+                    valeur=valeur
+                ))
+
+            kpis_prev = kpis_valeurs   # référence pour la prochaine itération
+            derniere_periode = p
+
+        # ── 4. KPIs suivis ───────────────────────────────────────────────
         if sauvegarder_kpis:
             KpiSuivi.query.filter_by(user_id=current_user.id).delete()
             for i, col in enumerate(cols_valides):
-                kpi = KpiSuivi(user_id=current_user.id, nom=col, ordre=i)
-                db.session.add(kpi)
+                db.session.add(KpiSuivi(user_id=current_user.id, nom=col, ordre=i))
 
         db.session.commit()
 
+        # ── 5. Réponse — historique complet + statistiques ───────────────
         toutes_periodes = PeriodeEntreprise.query.filter_by(
             user_id=current_user.id
         ).order_by(PeriodeEntreprise.date_upload).all()
 
         historique = []
         for p in toutes_periodes:
-            valeurs = ValeurKpi.query.filter_by(periode_id=p.id, user_id=current_user.id).all()
+            valeurs = ValeurKpi.query.filter_by(
+                periode_id=p.id, user_id=current_user.id).all()
             historique.append({
                 'id': p.id,
                 'date': p.date_upload.strftime('%d/%m/%Y'),
@@ -719,25 +873,24 @@ Exemple de format : {{"resume":"...","signal_fort":"...","alerte":null,"conseil"
                 'valeurs': {v.nom_kpi: v.valeur for v in valeurs}
             })
 
-        # Moyennes par KPI sur toutes les périodes
         averages = {}
         for kpi in cols_valides:
-            vals = [p['valeurs'][kpi] for p in historique if kpi in p['valeurs'] and p['valeurs'][kpi] is not None]
+            vals = [p['valeurs'][kpi] for p in historique
+                    if kpi in p['valeurs'] and p['valeurs'][kpi] is not None]
             if vals:
                 averages[kpi] = round(sum(vals) / len(vals), 2)
 
-        # Prévisions M+1, M+2, M+3 par régression linéaire
         predictions = {}
         if len(historique) >= 2:
             for kpi in cols_valides:
                 pts = [(i, p['valeurs'][kpi]) for i, p in enumerate(historique)
                        if kpi in p['valeurs'] and p['valeurs'][kpi] is not None]
                 if len(pts) >= 2:
-                    x_arr = np.array([t[0] for t in pts], dtype=float)
-                    y_arr = np.array([t[1] for t in pts], dtype=float)
-                    mx, my = x_arr.mean(), y_arr.mean()
-                    denom = ((x_arr - mx) ** 2).sum() or 1.0
-                    slope = float(((x_arr - mx) * (y_arr - my)).sum() / denom)
+                    xs = np.array([t[0] for t in pts], dtype=float)
+                    ys = np.array([t[1] for t in pts], dtype=float)
+                    mx, my = xs.mean(), ys.mean()
+                    denom = ((xs - mx) ** 2).sum() or 1.0
+                    slope = float(((xs - mx) * (ys - my)).sum() / denom)
                     intercept = float(my - slope * mx)
                     n = len(historique)
                     predictions[kpi] = {
@@ -746,19 +899,21 @@ Exemple de format : {{"resume":"...","signal_fort":"...","alerte":null,"conseil"
                         'm3': round(slope * (n + 2) + intercept, 2)
                     }
 
+        dp = derniere_periode
         return jsonify({
             'success': True,
-            'note': note,
-            'score': score,
-            'resume_ia': resume_ia,
-            'label_periode': label_periode,
-            'kpis_valeurs': kpis_valeurs,
+            'note': dp.note,
+            'score': dp.score,
+            'resume_ia': dp.resume_ia,
+            'label_periode': dp.label_periode,
+            'kpis_valeurs': lignes[-1][2],
             'historique': historique,
             'averages': averages,
             'predictions': predictions,
             'kpis_suivi': cols_valides,
             'cols_utilises': cols_valides,
-            'nb_periodes': len(historique)
+            'nb_periodes': len(historique),
+            'nb_periodes_importees': len(lignes)
         })
 
     except Exception as e:
@@ -859,6 +1014,126 @@ CONSIGNES :
         session['benchmark_sectoriel'] = data
         session.modified = True
         return jsonify({'success': True, 'benchmark': data, 'cached': False})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ─────────────────────────────────────────
+# BENCHMARK — QUESTION IA
+# ─────────────────────────────────────────
+@app.route('/benchmark_question', methods=['POST'])
+@login_required
+def benchmark_question():
+    try:
+        data = request.get_json()
+        question = (data.get('question') or '').strip()
+        valeurs_client = data.get('valeurs_client', {})
+
+        if not question:
+            return jsonify({'success': False, 'error': 'Question vide.'})
+
+        bench = session.get('benchmark_sectoriel')
+        if not bench:
+            return jsonify({'success': False, 'error': 'Générez d\'abord le benchmark (cliquez sur "Comparer au secteur").'})
+
+        # Score santé depuis la dernière période enregistrée
+        score_info = ''
+        derniere = PeriodeEntreprise.query.filter_by(
+            user_id=current_user.id
+        ).order_by(PeriodeEntreprise.date_upload.desc()).first()
+        if derniere:
+            score_info = f"Score de santé global Boussole : {derniere.note} ({derniere.score}/100) — {derniere.label_periode}\n"
+
+        # Construction du contexte benchmark + valeurs client
+        cat_names = {
+            'ca_et_marge':          'CA & Marges',
+            'couts_et_charges':     'Coûts & Charges',
+            'clients_et_retention': 'Clients & Rétention',
+            'productivite_et_rh':   'Productivité & RH',
+            'sante_financiere':     'Santé Financière'
+        }
+        ctx_lines = []
+        for cat_key, cat_label in cat_names.items():
+            cat_data = bench.get(cat_key, {})
+            if not cat_data:
+                continue
+            ctx_lines.append(f"\n[{cat_label}]")
+            for met_key, vals in cat_data.items():
+                user_val = valeurs_client.get(f"{cat_key}__{met_key}")
+                user_str = f" | CLIENT={user_val}" if user_val is not None else " | CLIENT=non renseigné"
+                ctx_lines.append(
+                    f"  {met_key}: P25={vals.get('bas','?')} · médiane={vals.get('moyenne','?')} · P75={vals.get('haut','?')}{user_str}"
+                )
+
+        context_str = score_info + '\n'.join(ctx_lines)
+
+        # Historique conversation (2 derniers échanges pour le contexte)
+        historique_conv = session.get('benchmark_conv', [])
+        hist_str = ''
+        if historique_conv:
+            hist_str = '\n'.join([
+                f"Q: {h['question']}\nR: {h.get('reponse_directe', '')[:250]}"
+                for h in historique_conv[-2:]
+            ])
+
+        system_prompt = """Tu es conseiller stratégique Boussole, expert en performance des PME françaises (10-250 salariés, CA 500k€-50M€). Tu analyses la position d'un dirigeant face aux benchmarks sectoriels INSEE / Banque de France / BPI France.
+
+RÈGLES ABSOLUES :
+1. Chiffrer chaque affirmation : écart en %, montants en €, délais en jours
+2. Calculer l'écart précis client vs médiane si la valeur CLIENT est fournie
+3. Actions concrètes : inclure délai réaliste et impact chiffré estimé
+4. Si la question ne concerne pas la performance / benchmark PME : répondre poliment dans "reponse_directe" et mettre "non applicable" dans "position_marche"
+5. Répondre UNIQUEMENT en JSON valide — aucun texte avant ni après
+
+FORMAT OBLIGATOIRE :
+{
+  "reponse_directe": "réponse précise et chiffrée à la question (2-3 phrases)",
+  "position_marche": "en dessous de la médiane | dans la médiane | au dessus de la médiane | non applicable",
+  "ecart_chiffre": "X% d'écart avec la médiane sectorielle (ou 'Non calculable' si valeur client absente)",
+  "causes_probables": ["cause 1 concrète et chiffrée", "cause 2 concrète et chiffrée"],
+  "actions_concretes": [
+    {"action": "Action précise et actionnable", "impact_estime": "impact chiffré attendu", "effort": "Faible"},
+    {"action": "...", "impact_estime": "...", "effort": "Moyen"},
+    {"action": "...", "impact_estime": "...", "effort": "Fort"}
+  ],
+  "comparaison_visuelle": {
+    "label": "Nom de l'indicateur principal concerné par la question",
+    "unite": "% ou € ou jours ou vide",
+    "client": null,
+    "moyenne_secteur": null,
+    "top25_secteur": null
+  }
+}"""
+
+        user_prompt = f"""DONNÉES BENCHMARK PME FRANÇAISES + VALEURS DU CLIENT :
+{context_str}
+{f"{chr(10)}HISTORIQUE (pour questions de suivi) :{chr(10)}{hist_str}" if hist_str else ""}
+
+QUESTION DU DIRIGEANT : {question}"""
+
+        client_groq = groq.Groq(api_key=GROQ_API_KEY)
+        resp = client_groq.chat.completions.create(
+            model='llama-3.3-70b-versatile',
+            response_format={"type": "json_object"},
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user',   'content': user_prompt}
+            ],
+            temperature=0.2
+        )
+        result = json.loads(resp.choices[0].message.content)
+
+        # Sauvegarder en session (garder 3 derniers échanges)
+        historique_conv.append({
+            'question':      question,
+            'reponse_directe': result.get('reponse_directe', ''),
+            'position_marche': result.get('position_marche', ''),
+        })
+        session['benchmark_conv'] = historique_conv[-3:]
+        session.modified = True
+
+        return jsonify({'success': True, **result, 'historique': session['benchmark_conv']})
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1120,6 +1395,244 @@ def export_pdf():
     except ImportError:
         return jsonify({'success': False, 'error': 'ReportLab non installé. Exécutez : pip install reportlab'})
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ─────────────────────────────────────────
+# PARAMÈTRES
+# ─────────────────────────────────────────
+def _get_or_create_profile(user_id):
+    p = UserProfile.query.filter_by(user_id=user_id).first()
+    if not p:
+        p = UserProfile(user_id=user_id)
+        db.session.add(p)
+        db.session.flush()
+    return p
+
+def _get_or_create_prefs(user_id):
+    p = UserPreferences.query.filter_by(user_id=user_id).first()
+    if not p:
+        p = UserPreferences(user_id=user_id)
+        db.session.add(p)
+        db.session.flush()
+    return p
+
+@app.route('/parametres')
+@login_required
+def parametres():
+    profile = _get_or_create_profile(current_user.id)
+    prefs   = _get_or_create_prefs(current_user.id)
+    db.session.commit()
+    kpis = KpiSuivi.query.filter_by(user_id=current_user.id).order_by(KpiSuivi.ordre).all()
+    periodes = PeriodeEntreprise.query.filter_by(user_id=current_user.id)\
+               .order_by(PeriodeEntreprise.date_upload.desc()).all()
+    nb_valeurs = ValeurKpi.query.filter_by(user_id=current_user.id).count()
+    return render_template('parametres.html',
+                           user=current_user, profile=profile, prefs=prefs,
+                           kpis=kpis, periodes=periodes, nb_valeurs=nb_valeurs)
+
+@app.route('/parametres/profil', methods=['POST'])
+@login_required
+def parametres_profil():
+    try:
+        data = request.get_json()
+        profile = _get_or_create_profile(current_user.id)
+        profile.nom_complet    = (data.get('nom_complet') or '').strip()[:200]
+        profile.nom_entreprise = (data.get('nom_entreprise') or '').strip()[:200]
+        profile.secteur        = (data.get('secteur') or '').strip()[:100]
+        profile.nb_employes    = (data.get('nb_employes') or '').strip()[:50]
+        email = (data.get('email') or '').strip().lower()
+        if email and email != current_user.email:
+            if User.query.filter_by(email=email).first():
+                return jsonify({'success': False, 'error': 'Cet email est déjà utilisé.'})
+            current_user.email = email
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/securite', methods=['POST'])
+@login_required
+def parametres_securite():
+    try:
+        data = request.get_json()
+        ancien = data.get('ancien_mdp', '')
+        nouveau = data.get('nouveau_mdp', '')
+        confirm = data.get('confirm_mdp', '')
+        if not check_password_hash(current_user.password, ancien):
+            return jsonify({'success': False, 'error': 'Mot de passe actuel incorrect.'})
+        if len(nouveau) < 8:
+            return jsonify({'success': False, 'error': 'Le nouveau mot de passe doit faire au moins 8 caractères.'})
+        if nouveau != confirm:
+            return jsonify({'success': False, 'error': 'Les deux mots de passe ne correspondent pas.'})
+        current_user.password = generate_password_hash(nouveau)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/preferences', methods=['POST'])
+@login_required
+def parametres_preferences():
+    try:
+        data  = request.get_json()
+        prefs = _get_or_create_prefs(current_user.id)
+        prefs.theme          = data.get('theme', prefs.theme)
+        prefs.couleur_accent = data.get('couleur_accent', prefs.couleur_accent)
+        prefs.langue         = data.get('langue', prefs.langue)
+        prefs.format_date    = data.get('format_date', prefs.format_date)
+        prefs.devise         = data.get('devise', prefs.devise)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/notifications', methods=['POST'])
+@login_required
+def parametres_notifications():
+    try:
+        data  = request.get_json()
+        prefs = _get_or_create_prefs(current_user.id)
+        prefs.notif_analyse = bool(data.get('notif_analyse', prefs.notif_analyse))
+        prefs.notif_score   = bool(data.get('notif_score',   prefs.notif_score))
+        prefs.notif_rapport = bool(data.get('notif_rapport', prefs.notif_rapport))
+        prefs.freq_resume   = data.get('freq_resume', prefs.freq_resume)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/kpis/renommer', methods=['POST'])
+@login_required
+def parametres_kpi_renommer():
+    try:
+        data = request.get_json()
+        kpi  = KpiSuivi.query.filter_by(id=data.get('id'), user_id=current_user.id).first()
+        if not kpi:
+            return jsonify({'success': False, 'error': 'KPI introuvable.'})
+        kpi.nom = (data.get('nom') or '').strip()[:150]
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/kpis/<int:kpi_id>', methods=['DELETE'])
+@login_required
+def parametres_kpi_supprimer(kpi_id):
+    try:
+        kpi = KpiSuivi.query.filter_by(id=kpi_id, user_id=current_user.id).first()
+        if not kpi:
+            return jsonify({'success': False, 'error': 'KPI introuvable.'})
+        db.session.delete(kpi)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/kpis/ordre', methods=['POST'])
+@login_required
+def parametres_kpi_ordre():
+    try:
+        data  = request.get_json()
+        ordre = data.get('ordre', [])
+        for i, kpi_id in enumerate(ordre):
+            kpi = KpiSuivi.query.filter_by(id=kpi_id, user_id=current_user.id).first()
+            if kpi:
+                kpi.ordre = i
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/export_donnees')
+@login_required
+def parametres_export():
+    try:
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # profil.json
+            profile = _get_or_create_profile(current_user.id)
+            prefs   = _get_or_create_prefs(current_user.id)
+            profil_data = {
+                'email': current_user.email,
+                'entreprise': current_user.entreprise,
+                'nom_complet': profile.nom_complet,
+                'nom_entreprise': profile.nom_entreprise,
+                'secteur': profile.secteur,
+                'nb_employes': profile.nb_employes,
+            }
+            zf.writestr('profil.json', json.dumps(profil_data, ensure_ascii=False, indent=2))
+
+            # periodes.csv
+            periodes = PeriodeEntreprise.query.filter_by(user_id=current_user.id).all()
+            if periodes:
+                rows = [['label_periode','date_upload','score','note','resume_ia']]
+                for p in periodes:
+                    rows.append([p.label_periode,
+                                 p.date_upload.strftime('%Y-%m-%d') if p.date_upload else '',
+                                 p.score, p.note, (p.resume_ia or '').replace('\n',' ')])
+                csv_txt = '\n'.join(','.join(f'"{str(c)}"' for c in r) for r in rows)
+                zf.writestr('periodes.csv', csv_txt)
+
+            # kpis_valeurs.csv
+            valeurs = ValeurKpi.query.filter_by(user_id=current_user.id).all()
+            if valeurs:
+                rows = [['periode_id','nom_kpi','valeur']]
+                for v in valeurs:
+                    rows.append([v.periode_id, v.nom_kpi, v.valeur])
+                csv_txt = '\n'.join(','.join(f'"{str(c)}"' for c in r) for r in rows)
+                zf.writestr('kpis_valeurs.csv', csv_txt)
+
+            # preferences.json
+            prefs_data = {
+                'theme': prefs.theme, 'couleur_accent': prefs.couleur_accent,
+                'langue': prefs.langue, 'format_date': prefs.format_date,
+                'devise': prefs.devise,
+            }
+            zf.writestr('preferences.json', json.dumps(prefs_data, ensure_ascii=False, indent=2))
+
+        buf.seek(0)
+        fname = f"boussole_export_{datetime.utcnow().strftime('%Y%m%d')}.zip"
+        return send_file(buf, as_attachment=True, download_name=fname,
+                         mimetype='application/zip')
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/supprimer_historique', methods=['POST'])
+@login_required
+def parametres_supprimer_historique():
+    try:
+        ValeurKpi.query.filter_by(user_id=current_user.id).delete()
+        PeriodeEntreprise.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/parametres/supprimer_compte', methods=['POST'])
+@login_required
+def parametres_supprimer_compte():
+    try:
+        uid = current_user.id
+        logout_user()
+        ValeurKpi.query.filter_by(user_id=uid).delete()
+        PeriodeEntreprise.query.filter_by(user_id=uid).delete()
+        KpiSuivi.query.filter_by(user_id=uid).delete()
+        UserProfile.query.filter_by(user_id=uid).delete()
+        UserPreferences.query.filter_by(user_id=uid).delete()
+        User.query.filter_by(id=uid).delete()
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
 
