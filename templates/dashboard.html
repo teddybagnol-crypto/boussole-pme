@@ -137,41 +137,71 @@
         .navbar {
             background: var(--card-bg);
             border-bottom: 1px solid var(--border);
-            padding: 0.8rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 0 2rem;
+            display: flex; justify-content: space-between; align-items: stretch;
             position: sticky; top: 0; z-index: 999;
-            box-shadow: var(--shadow-sm);
+            height: 56px; box-shadow: var(--shadow-sm);
         }
-        .navbar-left { display: flex; align-items: center; gap: 2.5rem; }
+        .navbar-left { display: flex; align-items: stretch; }
         .brand {
             font-family: var(--font-heading);
-            font-weight: 800; font-size: 1.35rem; color: var(--primary-dark);
-            display: flex; align-items: center; gap: 0.5rem;
-            text-decoration: none; cursor: pointer; letter-spacing: -0.02em;
-        }
-        .brand i { color: var(--primary); font-size: 1.25rem; }
-        .nav-tabs { display: flex; gap: 0.25rem; }
-        .nav-tab {
-            padding: 0.45rem 0.9rem; border-radius: var(--radius-md);
-            color: var(--text-sub); text-decoration: none;
-            font-family: var(--font-body);
-            font-weight: 600; font-size: 0.88rem;
+            font-weight: 800; font-size: 1.2rem; color: var(--primary-dark);
             display: flex; align-items: center; gap: 0.45rem;
-            transition: all var(--duration-fast) var(--ease-out);
-            border: 1.5px solid transparent; cursor: pointer;
+            text-decoration: none; cursor: pointer; letter-spacing: -0.02em;
+            padding-right: 1.25rem; margin-right: 0.25rem;
+            border-right: 1px solid var(--border); flex-shrink: 0;
+        }
+        .brand i { color: var(--primary); font-size: 1.05rem; }
+        .nav-tabs { display: flex; align-items: stretch; }
+        .nav-tab {
+            padding: 0 0.75rem;
+            color: var(--text-sub); text-decoration: none;
+            font-family: var(--font-body); font-weight: 600; font-size: 0.82rem;
+            display: flex; align-items: center; gap: 0.38rem;
+            transition: color var(--duration-fast), background var(--duration-fast);
+            border: none; border-bottom: 2.5px solid transparent;
+            cursor: pointer; background: none; white-space: nowrap;
         }
         .nav-tab:hover { color: var(--primary); background: var(--primary-50); }
-        .nav-tab.active {
-            color: var(--primary); background: var(--primary-light);
-            border-color: rgba(37,99,235,0.2);
+        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+        @media (max-width: 1140px) { .nav-tab .nav-label { display: none; } .nav-tab { padding: 0 0.6rem; } }
+        @media (max-width: 800px)  { .nav-tabs { display: none; } }
+
+        /* User area */
+        .user-menu { display: flex; align-items: center; gap: 0.4rem; }
+        .nav-icon-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-md);
+            border: 1.5px solid var(--border); background: none;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-sub); cursor: pointer; font-size: 0.85rem;
+            transition: all 120ms; text-decoration: none; position: relative;
         }
-        .user-menu { display: flex; align-items: center; gap: 1.5rem; }
+        .nav-icon-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-50); }
+        .notif-dot {
+            position: absolute; top: 4px; right: 4px;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--danger); border: 1.5px solid var(--card-bg);
+        }
+        .user-avatar-btn {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+            border-radius: var(--radius-md); border: 1.5px solid var(--border);
+            background: none; cursor: pointer; text-decoration: none;
+            transition: all 120ms; color: var(--text);
+        }
+        .user-avatar-btn:hover { border-color: var(--primary); background: var(--primary-50); }
+        .user-avatar {
+            width: 26px; height: 26px; border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem;
+            flex-shrink: 0;
+        }
+        .user-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+        .nav-sep { width: 1px; height: 20px; background: var(--border); margin: 0 0.2rem; }
         .color-picker-wrapper {
             display: flex; align-items: center; gap: 0.5rem;
             font-size: 0.83rem; color: var(--text-sub); font-weight: 600;
-            border-right: 1px solid var(--border); padding-right: 1.2rem;
         }
         .color-picker-wrapper input[type="color"] {
             -webkit-appearance: none; border: none;
@@ -183,9 +213,10 @@
         .color-picker-wrapper input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
         .logout-btn {
             color: var(--text-sub); text-decoration: none;
-            font-size: 0.87rem; font-weight: 600;
-            padding: 0.45rem 0.9rem; border-radius: var(--radius-md);
-            transition: all var(--duration-fast); border: 1.5px solid transparent;
+            font-size: 0.8rem; font-weight: 600;
+            padding: 0.38rem 0.7rem; border-radius: var(--radius-md);
+            transition: all 120ms; border: 1.5px solid transparent;
+            display: flex; align-items: center; gap: 0.35rem;
         }
         .logout-btn:hover { color: var(--danger); background: var(--danger-50); border-color: var(--danger-bg); }
         .container {
@@ -646,11 +677,6 @@
         /* ===== STEP ROW ===== */
         .step-num { background: var(--primary); border-radius: var(--radius-full); font-family: var(--font-heading); }
 
-        /* ===== NAV DROPDOWN ===== */
-        .nav-drop-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
-        .nav-drop-item { border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.875rem; }
-        .nav-drop-item:hover, .nav-drop-item.active { background: var(--primary-50); color: var(--primary); }
-
         /* ===== MINI NAV RÉSULTATS ===== */
         .res-nav-wrap { background: var(--bg-main); border-bottom: 1px solid var(--border); }
         .res-nav-btn { border-radius: var(--radius-full); font-family: var(--font-body); font-weight: 700; }
@@ -692,8 +718,6 @@
             .metrics-grid { grid-template-columns: 1fr 1fr; }
             .kpi-evo-grid { grid-template-columns: 1fr 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
-            .navbar-left { gap: 1rem; }
-            .nav-tab span.nav-label { display: none; }
         }
         @media (max-width: 600px) {
             .hub-grid { grid-template-columns: 1fr; }
@@ -708,45 +732,52 @@
 <nav class="navbar">
     <div class="navbar-left">
         <a href="#" class="brand" onclick="goHome(event)">
-            <i class="fa-solid fa-compass" style="font-size:1.35rem"></i> Boussole
-            <span style="font-weight:400;font-size:0.85rem;color:var(--text-sub);margin-left:0.3rem;letter-spacing:0.04em">PME</span>
+            <i class="fa-solid fa-compass"></i> Boussole
         </a>
         <div class="nav-tabs">
             <a href="#" class="nav-tab" id="tabHome" onclick="switchTab('home')">
-                <i class="fa-solid fa-house"></i> Accueil
+                <i class="fa-solid fa-house"></i><span class="nav-label"> Accueil</span>
             </a>
             <a href="#" class="nav-tab" id="tabAnalyse" onclick="switchTab('analyse')">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Analyser
+                <i class="fa-solid fa-wand-magic-sparkles"></i><span class="nav-label"> Analyser</span>
             </a>
             <a href="#" class="nav-tab" id="tabEvolution" onclick="switchTab('evolution')">
-                <i class="fa-solid fa-chart-line"></i> Mon tableau de bord
+                <i class="fa-solid fa-chart-line"></i><span class="nav-label"> Pilotage</span>
             </a>
-            <div class="nav-dropdown">
-                <button class="nav-tab nav-drop-btn" id="tabDropBtn" onclick="toggleDropdown(event)">
-                    <i class="fa-solid fa-ellipsis"></i> Outils <i class="fa-solid fa-chevron-down" style="font-size:0.62rem;margin-left:0.1rem"></i>
-                </button>
-                <div class="nav-drop-menu" id="navDropMenu">
-                    <a href="#" class="nav-drop-item" id="tabBenchmark" onclick="switchTab('benchmark');closeDropdown()">
-                        <i class="fa-solid fa-chart-bar"></i> Comparer au secteur
-                    </a>
-                    <a href="#" class="nav-drop-item" id="tabAlertes" onclick="switchTab('alertes');closeDropdown()">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Alertes & Risques
-                    </a>
-                    <a href="#" class="nav-drop-item" id="tabWhatif" onclick="switchTab('whatif');closeDropdown()">
-                        <i class="fa-solid fa-sliders"></i> Simuler des scénarios
-                    </a>
-                    <div class="nav-drop-sep"></div>
-                    <a href="#" class="nav-drop-item" id="tabSynthese" onclick="switchTab('synthese');closeDropdown()">
-                        <i class="fa-solid fa-file-pdf"></i> Rapport PDF
-                    </a>
-                </div>
-            </div>
+            <a href="#" class="nav-tab" id="tabBenchmark" onclick="switchTab('benchmark')">
+                <i class="fa-solid fa-chart-bar"></i><span class="nav-label"> Benchmark</span>
+            </a>
+            <a href="#" class="nav-tab" id="tabAlertes" onclick="switchTab('alertes')">
+                <i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label"> Alertes</span>
+            </a>
+            <a href="#" class="nav-tab" id="tabWhatif" onclick="switchTab('whatif')">
+                <i class="fa-solid fa-sliders"></i><span class="nav-label"> Simuler</span>
+            </a>
+            <a href="#" class="nav-tab" id="tabSynthese" onclick="switchTab('synthese')">
+                <i class="fa-solid fa-file-pdf"></i><span class="nav-label"> Rapport</span>
+            </a>
         </div>
     </div>
     <div class="user-menu">
-        <span style="font-size:0.9rem;color:var(--text-sub)">Bonjour, <strong style="color:var(--text-main)">{{ user.email if user else 'Invité' }}</strong></span>
-        <a href="/parametres" class="logout-btn" style="color:var(--text-sub)"><i class="fa-solid fa-gear"></i> Paramètres</a>
-        <a href="/logout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Déconnexion</a>
+        <a href="/parametres" class="nav-icon-btn" title="Paramètres">
+            <i class="fa-solid fa-gear"></i>
+        </a>
+        <button class="nav-icon-btn" title="Notifications" onclick="void(0)">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notif-dot"></span>
+        </button>
+        <div class="nav-sep"></div>
+        <a href="/parametres" class="user-avatar-btn">
+            <div class="user-avatar" id="navAvatar">
+                {% if user and user.email %}{{ user.email[0].upper() }}{% else %}?{% endif %}
+            </div>
+            <span class="user-name">
+                {% if user and user.email %}{{ user.email.split('@')[0] }}{% else %}Invité{% endif %}
+            </span>
+        </a>
+        <a href="/logout" class="logout-btn" title="Déconnexion">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
     </div>
 </nav>
 
