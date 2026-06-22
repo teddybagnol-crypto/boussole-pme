@@ -364,7 +364,16 @@ async function login() {
 
     try {
         const resp = await fetch('/login', { method: 'POST', body: form });
-        const data = await resp.json();
+        let data;
+        try {
+            data = await resp.json();
+        } catch(_) {
+            // La réponse n'est pas du JSON (ex: erreur serveur HTML)
+            showError(`Erreur serveur (${resp.status}). Vérifiez que le serveur est démarré.`);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter';
+            return;
+        }
         if (data.success) {
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Connecté !';
             window.location.href = data.redirect;
@@ -374,7 +383,7 @@ async function login() {
             btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter';
         }
     } catch(e) {
-        showError('Erreur réseau, veuillez réessayer.');
+        showError('Impossible de joindre le serveur. Vérifiez votre connexion.');
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter';
     }

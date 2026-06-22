@@ -367,13 +367,19 @@ def inscription():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return jsonify({'success': True, 'redirect': '/dashboard'})
-        return jsonify({'success': False, 'error': 'Email ou mot de passe incorrect'})
+        try:
+            email    = request.form.get('email', '').strip()
+            password = request.form.get('password', '')
+            if not email or not password:
+                return jsonify({'success': False, 'error': 'Email et mot de passe requis.'})
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password, password):
+                login_user(user)
+                return jsonify({'success': True, 'redirect': '/dashboard'})
+            return jsonify({'success': False, 'error': 'Email ou mot de passe incorrect.'})
+        except Exception as e:
+            print('ERREUR /login :', str(e))
+            return jsonify({'success': False, 'error': 'Erreur serveur : ' + str(e)})
     return render_template('login.html')
 
 @app.route('/logout')
@@ -1765,6 +1771,16 @@ def communaute_opt_in():
 # ─────────────────────────────────────────
 with app.app_context():
     db.create_all()
+    # Migration: ajouter les colonnes ajoutées après la création initiale
+    with db.engine.connect() as conn:
+        for sql in [
+            "ALTER TABLE user_preferences ADD COLUMN profil_public BOOLEAN DEFAULT FALSE",
+        ]:
+            try:
+                conn.execute(db.text(sql))
+                conn.commit()
+            except Exception:
+                pass  # colonne déjà existante
 
 if __name__ == '__main__':
     app.run(debug=True)
