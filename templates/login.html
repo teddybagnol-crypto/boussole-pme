@@ -1,50 +1,392 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connexion — Ted & Co</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#fafaf8;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:2.5rem;width:100%;max-width:400px}
-.logo{font-size:22px;text-align:center;margin-bottom:2rem}.logo span{color:#1D9E75}
-h1{font-size:20px;font-weight:500;margin-bottom:6px;text-align:center}
-p{font-size:14px;color:#6b7280;text-align:center;margin-bottom:2rem;font-weight:300}
-input{width:100%;padding:11px 14px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:12px;outline:none;transition:border-color .2s}
-input:focus{border-color:#1D9E75}
-button{width:100%;padding:12px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .2s;font-weight:500}
-button:hover{opacity:.85}
-.link{text-align:center;margin-top:1rem;font-size:13px;color:#6b7280}
-.link a{color:#1D9E75;text-decoration:none;font-weight:500}
-.error{background:#FEE2E2;color:#991B1B;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — Boussole PME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #F7F6F4;
+            min-height: 100vh;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== PANNEAU GAUCHE ===== */
+        .left-panel {
+            width: 480px;
+            flex-shrink: 0;
+            background: linear-gradient(160deg, #1B3A6B 0%, #2563EB 60%, #3B82F6 100%);
+            padding: 3rem 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 400px; height: 400px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; left: -60px;
+            width: 280px; height: 280px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -0.03em;
+            position: relative; z-index: 1;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .brand-sub { font-size: 0.65rem; font-weight: 600; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 0.1rem; }
+
+        .left-content { position: relative; z-index: 1; }
+        .left-content h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.9rem;
+            color: white;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        .left-content h2 span { opacity: 0.7; }
+        .left-content p {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.92rem;
+            line-height: 1.65;
+            margin-bottom: 2rem;
+        }
+
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+        .feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .feature-icon {
+            width: 32px; height: 32px; flex-shrink: 0;
+            background: rgba(255,255,255,0.12);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.9);
+            margin-top: 1px;
+        }
+        .feature-text strong {
+            display: block;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+        .feature-text span {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        .left-footer {
+            position: relative; z-index: 1;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.75rem;
+        }
+
+        /* ===== PANNEAU DROIT (FORMULAIRE) ===== */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-header { margin-bottom: 2rem; }
+        .form-header h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #18181B;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.35rem;
+        }
+        .form-header p { color: #71717A; font-size: 0.9rem; line-height: 1.5; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #3F3F46;
+            margin-bottom: 0.4rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid #E4E4E7;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #18181B;
+            background: #fff;
+            outline: none;
+            transition: border-color 150ms, box-shadow 150ms;
+        }
+        .form-input::placeholder { color: #A1A1AA; }
+        .form-input:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+        }
+
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap .form-input { padding-left: 2.4rem; }
+        .input-icon {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #A1A1AA;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.8rem;
+            background: #2563EB;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 150ms, transform 100ms, box-shadow 150ms;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+            margin-top: 0.5rem;
+        }
+        .btn-submit:hover { background: #1E4D8C; box-shadow: 0 6px 16px rgba(37,99,235,0.35); }
+        .btn-submit:active { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+        .form-divider {
+            text-align: center;
+            color: #A1A1AA;
+            font-size: 0.8rem;
+            margin: 1.25rem 0;
+            position: relative;
+        }
+        .form-divider::before, .form-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 2rem);
+            height: 1px;
+            background: #E4E4E7;
+        }
+        .form-divider::before { left: 0; }
+        .form-divider::after  { right: 0; }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.83rem;
+            color: #71717A;
+        }
+        .form-footer a {
+            color: #2563EB;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .form-footer a:hover { text-decoration: underline; }
+
+        .alert {
+            padding: 0.7rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .alert.error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; display: none; }
+        .alert.success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; display: none; }
+        .alert.show    { display: flex; }
+
+        /* Responsive */
+        @media (max-width: 860px) {
+            .left-panel { display: none; }
+        }
+    </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">Ted <span>&</span> Co</div>
-  <h1>Connexion</h1>
-  <p>Accédez à votre espace client</p>
-  <div class="error" id="error"></div>
-  <input type="email" id="email" placeholder="Email professionnel">
-  <input type="password" id="password" placeholder="Mot de passe">
-  <button onclick="login()">Se connecter →</button>
-  <div class="link">Pas encore de compte ? <a href="/inscription">S'inscrire</a></div>
-</div>
+
+    <!-- GAUCHE : branding -->
+    <div class="left-panel">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-compass"></i></div>
+            Boussole<span class="brand-sub">PME</span>
+        </div>
+
+        <div class="left-content">
+            <h2>Pilotez votre entreprise<br><span>avec clarté.</span></h2>
+            <p>Importez vos données, obtenez en secondes un diagnostic complet, des projections et les 3 actions prioritaires pour votre PME.</p>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="feature-text">
+                        <strong>Analyse IA instantanée</strong>
+                        <span>Score A→E, causes racines et recommandations chiffrées en quelques secondes.</span>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="feature-text">
+                        <strong>Suivi de vos KPIs</strong>
+                        <span>Évolution, tendances et prévisions sur toutes vos métriques clés.</span>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="feature-text">
+                        <strong>Benchmark communauté</strong>
+                        <span>Comparez vos performances avec d'autres PME de votre secteur.</span>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <div class="feature-text">
+                        <strong>Rapports PDF clairs</strong>
+                        <span>Synthèses prêtes à partager avec votre expert-comptable ou vos associés.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="left-footer">© 2025 Boussole PME — Fait pour les dirigeants français</div>
+    </div>
+
+    <!-- DROITE : formulaire -->
+    <div class="right-panel">
+        <div class="form-box">
+            <div class="form-header">
+                <h1>Bon retour 👋</h1>
+                <p>Connectez-vous pour accéder à votre tableau de bord.</p>
+            </div>
+
+            <div class="alert error" id="alertError">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="alertErrorMsg"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Adresse e-mail</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-regular fa-envelope input-icon"></i>
+                    <input class="form-input" type="email" id="email" placeholder="vous@entreprise.fr" autocomplete="email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Mot de passe</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
+                </div>
+            </div>
+
+            <button class="btn-submit" id="btnLogin" onclick="login()">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter
+            </button>
+
+            <div class="form-divider">ou</div>
+
+            <div class="form-footer">
+                Pas encore de compte ?
+                <a href="/inscription">Créer un compte gratuitement →</a>
+            </div>
+        </div>
+    </div>
+
 <script>
-async function login(){
-  const form = new FormData();
-  form.append('email', document.getElementById('email').value);
-  form.append('password', document.getElementById('password').value);
-  const resp = await fetch('/login', {method:'POST', body:form});
-  const data = await resp.json();
-  if(data.success){ window.location.href = data.redirect; }
-  else{
-    const err = document.getElementById('error');
-    err.textContent = data.error;
-    err.style.display = 'block';
-  }
+async function login() {
+    const btn   = document.getElementById('btnLogin');
+    const email = document.getElementById('email').value.trim();
+    const pwd   = document.getElementById('password').value;
+
+    hideAlert();
+    if (!email || !pwd) { showError('Veuillez remplir tous les champs.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Connexion…';
+
+    const form = new FormData();
+    form.append('email', email);
+    form.append('password', pwd);
+
+    try {
+        const resp = await fetch('/login', { method: 'POST', body: form });
+        const data = await resp.json();
+        if (data.success) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Connecté !';
+            window.location.href = data.redirect;
+        } else {
+            showError(data.error || 'Email ou mot de passe incorrect.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter';
+        }
+    } catch(e) {
+        showError('Erreur réseau, veuillez réessayer.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter';
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('alertError');
+    document.getElementById('alertErrorMsg').textContent = msg;
+    el.classList.add('show');
+}
+function hideAlert() {
+    document.getElementById('alertError').classList.remove('show');
 }
 </script>
 </body>

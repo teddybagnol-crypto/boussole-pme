@@ -331,17 +331,34 @@ def index():
 @app.route('/inscription', methods=['GET', 'POST'])
 def inscription():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        entreprise = request.form.get('entreprise')
+        email      = request.form.get('email', '').strip()
+        password   = request.form.get('password', '')
+        entreprise = request.form.get('entreprise', '').strip()
+        nom_complet  = request.form.get('nom_complet', '').strip()
+        secteur      = request.form.get('secteur', '').strip()
+        nb_employes  = request.form.get('nb_employes', '').strip()
+
+        if not email or not password:
+            return jsonify({'success': False, 'error': 'Email et mot de passe obligatoires.'})
         if User.query.filter_by(email=email).first():
-            return jsonify({'success': False, 'error': 'Email déjà utilisé'})
+            return jsonify({'success': False, 'error': 'Cet email est déjà utilisé.'})
+
         user = User(
             email=email,
             password=generate_password_hash(password),
             entreprise=entreprise
         )
         db.session.add(user)
+        db.session.flush()  # pour avoir user.id
+
+        profile = UserProfile(
+            user_id=user.id,
+            nom_complet=nom_complet,
+            nom_entreprise=entreprise,
+            secteur=secteur,
+            nb_employes=nb_employes
+        )
+        db.session.add(profile)
         db.session.commit()
         login_user(user)
         return jsonify({'success': True, 'redirect': '/dashboard'})
