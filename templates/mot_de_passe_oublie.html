@@ -115,13 +115,29 @@
         </div>
     </div>
 
-    <!-- Succès -->
+    <!-- Succès (email envoyé) -->
     <div class="success-state" id="successState">
         <div class="big-icon"><i class="fa-solid fa-circle-check"></i></div>
         <h2>Email envoyé !</h2>
         <p>Si un compte est associé à <strong id="emailSent"></strong>, vous recevrez un email dans les prochaines minutes.</p>
         <div class="hint">
-            <strong>Vous ne voyez rien ?</strong> Vérifiez vos spams ou courriers indésirables. Le lien expire dans 1 heure.
+            <strong>Vous ne voyez rien ?</strong> Vérifiez vos spams. Le lien expire dans 1 heure.
+        </div>
+        <div class="back-link" style="margin-top:1.25rem">
+            <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
+        </div>
+    </div>
+
+    <!-- Fallback : email non configuré → affichage du lien -->
+    <div class="success-state" id="noMailState" style="display:none;text-align:left">
+        <div class="big-icon" style="text-align:center"><i class="fa-solid fa-link" style="color:#2563EB"></i></div>
+        <h2 style="text-align:center">Votre lien de réinitialisation</h2>
+        <p style="text-align:center;margin-bottom:1.25rem">L'envoi d'email n'est pas encore configuré. Cliquez directement sur ce lien pour réinitialiser votre mot de passe&nbsp;:</p>
+        <a id="resetLinkAnchor" href="#" style="display:block;background:#2563EB;color:white;text-decoration:none;padding:0.75rem 1rem;border-radius:10px;font-weight:700;font-size:0.87rem;text-align:center;word-break:break-all;margin-bottom:1rem">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Réinitialiser mon mot de passe
+        </a>
+        <div class="hint" style="background:#FEF3C7;border-color:#FCD34D;color:#92400E">
+            <strong><i class="fa-solid fa-triangle-exclamation"></i> Ce lien expire dans 1 heure.</strong> Pour recevoir un email automatique à l'avenir, configurez <code>MAIL_USERNAME</code> et <code>MAIL_PASSWORD</code> dans les variables d'environnement Render.
         </div>
         <div class="back-link" style="margin-top:1.25rem">
             <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
@@ -153,8 +169,17 @@ async function envoyer() {
 
         if (data.success) {
             document.getElementById('emailSent').textContent = email;
-            document.getElementById('formState').style.display    = 'none';
-            document.getElementById('successState').style.display = 'block';
+
+            if (data.reset_url) {
+                // Pas d'email configuré ou erreur SMTP → afficher le lien directement
+                document.getElementById('formState').style.display    = 'none';
+                document.getElementById('noMailState').style.display  = 'block';
+                document.getElementById('resetLinkDisplay').textContent = data.reset_url;
+                document.getElementById('resetLinkAnchor').href = data.reset_url;
+            } else {
+                document.getElementById('formState').style.display    = 'none';
+                document.getElementById('successState').style.display = 'block';
+            }
         } else {
             showError(data.error || 'Une erreur est survenue.');
             btn.disabled = false;
