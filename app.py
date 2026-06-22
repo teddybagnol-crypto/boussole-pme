@@ -16,7 +16,13 @@ from flask import Flask, render_template, request, jsonify, redirect, session, s
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_session import Session
-from flask_mail import Mail, Message
+try:
+    from flask_mail import Mail, Message
+    MAIL_AVAILABLE = True
+except ImportError:
+    MAIL_AVAILABLE = False
+    Mail = None
+    Message = None
 from werkzeug.security import generate_password_hash, check_password_hash
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LassoCV, LinearRegression
@@ -50,7 +56,7 @@ app.config['MAIL_USE_TLS']  = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'noreply@boussole-pme.fr')
-mail = Mail(app)
+mail = Mail(app) if MAIL_AVAILABLE else None
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
@@ -1690,7 +1696,7 @@ def mot_de_passe_oublie():
         try:
             email = request.form.get('email', '').strip().lower()
             user  = User.query.filter_by(email=email).first()
-            mail_configured = bool(app.config.get('MAIL_USERNAME'))
+            mail_configured = MAIL_AVAILABLE and bool(app.config.get('MAIL_USERNAME'))
 
             # Pas d'utilisateur trouvé
             if not user:
