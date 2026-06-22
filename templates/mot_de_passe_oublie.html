@@ -169,15 +169,14 @@ async function envoyer() {
 
         if (data.success) {
             document.getElementById('emailSent').textContent = email;
+            document.getElementById('formState').style.display = 'none';
 
             if (data.reset_url) {
-                // Pas d'email configuré ou erreur SMTP → afficher le lien directement
-                document.getElementById('formState').style.display    = 'none';
+                // Email non configuré ou SMTP en erreur → lien direct
                 document.getElementById('noMailState').style.display  = 'block';
-                document.getElementById('resetLinkDisplay').textContent = data.reset_url;
-                document.getElementById('resetLinkAnchor').href = data.reset_url;
+                document.getElementById('resetLinkAnchor').href        = data.reset_url;
             } else {
-                document.getElementById('formState').style.display    = 'none';
+                // Email envoyé avec succès
                 document.getElementById('successState').style.display = 'block';
             }
         } else {

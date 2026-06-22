@@ -1690,65 +1690,67 @@ def mot_de_passe_oublie():
         try:
             email = request.form.get('email', '').strip().lower()
             user  = User.query.filter_by(email=email).first()
+            mail_configured = bool(app.config.get('MAIL_USERNAME'))
 
-            # On répond toujours "succès" pour ne pas révéler si l'email existe
-            if user:
-                # Supprimer les anciens tokens non utilisés pour cet utilisateur
-                PasswordResetToken.query.filter_by(user_id=user.id, used=False).delete()
-
-                token      = secrets.token_urlsafe(48)
-                expires_at = datetime.utcnow() + timedelta(hours=1)
-                prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
-                db.session.add(prt)
-                db.session.commit()
-
-                reset_url = request.host_url.rstrip('/') + f'/reinitialiser-mot-de-passe/{token}'
-
-                mail_configured = bool(app.config.get('MAIL_USERNAME'))
+            # Pas d'utilisateur trouvé
+            if not user:
                 if mail_configured:
-                    try:
-                        msg = Message(
-                            subject='Réinitialisation de votre mot de passe — Boussole PME',
-                            recipients=[user.email],
-                            html=f"""
-                            <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:2rem;background:#fff">
-                                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:#1B3A6B;margin-bottom:1.5rem">
-                                    &#9711; Boussole PME
-                                </div>
-                                <h2 style="font-size:1.2rem;color:#18181B;margin-bottom:0.75rem">Réinitialisez votre mot de passe</h2>
-                                <p style="color:#71717A;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem">
-                                    Vous avez demandé la réinitialisation de votre mot de passe sur <strong>Boussole PME</strong>. Cliquez sur le bouton ci-dessous — le lien est valable <strong>1 heure</strong>.
-                                </p>
-                                <div style="text-align:center;margin:2rem 0">
-                                    <a href="{reset_url}" style="display:inline-block;background:#2563EB;color:white;text-decoration:none;padding:0.85rem 2rem;border-radius:10px;font-weight:700;font-size:0.95rem;font-family:'Plus Jakarta Sans',sans-serif">
-                                        Réinitialiser mon mot de passe →
-                                    </a>
-                                </div>
-                                <p style="color:#A1A1AA;font-size:0.78rem;line-height:1.55">
-                                    Ou copiez ce lien dans votre navigateur :<br>
-                                    <span style="color:#2563EB;word-break:break-all">{reset_url}</span>
-                                </p>
-                                <hr style="border:none;border-top:1px solid #E4E4E7;margin:1.5rem 0">
-                                <p style="color:#A1A1AA;font-size:0.75rem">
-                                    Si vous n'avez pas fait cette demande, ignorez cet email. Votre mot de passe reste inchangé.<br>
-                                    © 2025 Boussole PME
-                                </p>
-                            </div>
-                            """
-                        )
-                        mail.send(msg)
-                        print(f'Email reset envoyé à {user.email}')
-                    except Exception as mail_err:
-                        print('ERREUR envoi email :', str(mail_err))
-                        # Fallback : retourner le lien pour que l'admin puisse le transmettre
-                        return jsonify({'success': True, 'reset_url': reset_url, 'mail_error': str(mail_err)})
+                    # Avec email configuré : ne pas révéler que le compte n'existe pas
+                    return jsonify({'success': True, 'email_sent': True})
                 else:
-                    # Pas de config email → on retourne le lien directement
-                    print(f'[RESET LINK] {reset_url}')
-                    return jsonify({'success': True, 'reset_url': reset_url, 'no_mail': True})
+                    return jsonify({'success': False, 'error': "Aucun compte trouvé avec cette adresse email."})
 
-            return jsonify({'success': True})
+            # Utilisateur trouvé → créer le token
+            PasswordResetToken.query.filter_by(user_id=user.id, used=False).delete()
+            token      = secrets.token_urlsafe(48)
+            expires_at = datetime.utcnow() + timedelta(hours=1)
+            db.session.add(PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at))
+            db.session.commit()
+
+            reset_url = request.host_url.rstrip('/') + f'/reinitialiser-mot-de-passe/{token}'
+
+            if mail_configured:
+                try:
+                    msg = Message(
+                        subject='Réinitialisation de votre mot de passe — Boussole PME',
+                        recipients=[user.email],
+                        html=f"""
+                        <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:2rem;background:#fff">
+                            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:#1B3A6B;margin-bottom:1.5rem">
+                                &#9711; Boussole PME
+                            </div>
+                            <h2 style="font-size:1.2rem;color:#18181B;margin-bottom:0.75rem">Réinitialisez votre mot de passe</h2>
+                            <p style="color:#71717A;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem">
+                                Vous avez demandé la réinitialisation de votre mot de passe sur <strong>Boussole PME</strong>.
+                                Ce lien est valable <strong>1 heure</strong>.
+                            </p>
+                            <div style="text-align:center;margin:2rem 0">
+                                <a href="{reset_url}" style="display:inline-block;background:#2563EB;color:white;text-decoration:none;padding:0.85rem 2rem;border-radius:10px;font-weight:700;font-size:0.95rem">
+                                    Réinitialiser mon mot de passe →
+                                </a>
+                            </div>
+                            <p style="color:#A1A1AA;font-size:0.78rem;line-height:1.55">
+                                Lien direct : <span style="color:#2563EB;word-break:break-all">{reset_url}</span>
+                            </p>
+                            <hr style="border:none;border-top:1px solid #E4E4E7;margin:1.5rem 0">
+                            <p style="color:#A1A1AA;font-size:0.75rem">Si vous n'avez pas fait cette demande, ignorez cet email. © 2025 Boussole PME</p>
+                        </div>
+                        """
+                    )
+                    mail.send(msg)
+                    print(f'[RESET] Email envoyé à {user.email}')
+                    return jsonify({'success': True, 'email_sent': True})
+                except Exception as mail_err:
+                    print(f'[RESET] Erreur SMTP : {mail_err}')
+                    # SMTP échoue → afficher le lien directement
+                    return jsonify({'success': True, 'reset_url': reset_url, 'mail_error': str(mail_err)})
+            else:
+                # Pas de config email → lien direct à l'écran
+                print(f'[RESET] Pas de mail configuré. Lien : {reset_url}')
+                return jsonify({'success': True, 'reset_url': reset_url})
+
         except Exception as e:
+            db.session.rollback()
             print('ERREUR /mot-de-passe-oublie :', str(e))
             return jsonify({'success': False, 'error': str(e)})
     return render_template('mot_de_passe_oublie.html')
