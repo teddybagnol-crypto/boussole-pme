@@ -1697,9 +1697,31 @@ def communaute_feed():
                 'derniere_activite': derniere_activite,
             })
 
+        # Le viewer peut-il voir les autres ? Seulement s'il a partagé son propre profil.
+        my_prefs = UserPreferences.query.filter_by(user_id=current_user.id).first()
+        viewer_is_public = bool(my_prefs and my_prefs.profil_public)
+
+        # Si le viewer n'a pas partagé, on masque les données des autres cartes
+        if not viewer_is_public:
+            for c in cards:
+                if not c['is_me']:
+                    c['score']      = None
+                    c['note']       = '?'
+                    c['evolution']  = None
+                    c['nb_kpis']    = None
+                    c['secteur']    = '—'
+                    c['nb_employes']= '—'
+                    c['derniere_activite'] = '—'
+                    c['locked']     = True
+                else:
+                    c['locked'] = False
+        else:
+            for c in cards:
+                c['locked'] = False
+
         # Ma carte en premier, puis tri par score desc
         cards.sort(key=lambda c: (0 if c['is_me'] else 1, -(c['score'] or 0)))
-        return jsonify({'success': True, 'cards': cards, 'total': len(cards)})
+        return jsonify({'success': True, 'cards': cards, 'total': len(cards), 'viewer_is_public': viewer_is_public})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

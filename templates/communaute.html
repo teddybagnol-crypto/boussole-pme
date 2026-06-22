@@ -20,13 +20,11 @@
             --primary-hover:  #1E4D8C;
             --primary-light:  #DBEAFE;
             --primary-50:     #EFF6FF;
-            --accent:     #0D9488;
-            --accent-bg:  #CCFBF1;
             --border:        #E4E4E7;
             --border-strong: #D4D4D8;
             --success:    #16A34A; --success-bg: #DCFCE7;
             --warning:    #D97706; --warning-bg: #FEF3C7;
-            --danger:     #DC2626; --danger-bg:  #FEE2E2; --danger-50: #FEF2F2;
+            --danger:     #DC2626; --danger-bg: #FEE2E2; --danger-50: #FEF2F2;
             --score-A: #15803D; --score-A-bg: #DCFCE7; --score-A-border: #86EFAC;
             --score-B: #0D9488; --score-B-bg: #CCFBF1; --score-B-border: #5EEAD4;
             --score-C: #D97706; --score-C-bg: #FEF3C7; --score-C-border: #FCD34D;
@@ -38,12 +36,7 @@
             --shadow-sm: 0 1px 3px rgba(27,58,107,0.08), 0 1px 2px rgba(27,58,107,0.04);
             --shadow-md: 0 4px 12px rgba(27,58,107,0.10), 0 2px 4px rgba(27,58,107,0.06);
             --shadow-lg: 0 12px 32px rgba(27,58,107,0.12), 0 4px 8px rgba(27,58,107,0.06);
-            --radius-sm:   6px;
-            --radius-md:   10px;
-            --radius-lg:   14px;
-            --radius-xl:   20px;
-            --radius-full: 9999px;
-            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+            --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 9999px;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-body); background: var(--bg-main); color: var(--text-main); font-size: 0.9375rem; line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -83,7 +76,18 @@
         .hero-stat-num { font-family: var(--font-data); font-size: 1.5rem; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
         .hero-stat-label { font-size: 0.72rem; color: var(--text-sub); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.1rem; }
 
-        /* ===== OPT-IN BANNER ===== */
+        /* ===== GATE BANNER (non-partagé) ===== */
+        .gate-banner { background: linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%); border-radius: var(--radius-lg); padding: 1.75rem 2rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; color: white; box-shadow: var(--shadow-lg); }
+        .gate-banner-icon { width: 52px; height: 52px; border-radius: var(--radius-lg); background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .gate-banner-text { flex: 1; min-width: 220px; }
+        .gate-banner-text strong { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; display: block; margin-bottom: 0.3rem; }
+        .gate-banner-text p { font-size: 0.85rem; opacity: 0.85; line-height: 1.55; }
+        .gate-banner-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
+        .btn-unlock { background: white; color: var(--primary-dark); font-family: var(--font-heading); font-weight: 800; font-size: 0.88rem; padding: 0.65rem 1.4rem; border-radius: var(--radius-md); border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 120ms; white-space: nowrap; }
+        .btn-unlock:hover { background: var(--primary-50); transform: translateY(-1px); }
+        .btn-unlock-sub { font-size: 0.78rem; opacity: 0.75; color: white; display: flex; align-items: center; gap: 0.4rem; }
+
+        /* ===== OPTIN BANNER (partagé) ===== */
         .optin-banner { background: linear-gradient(135deg, var(--primary-50) 0%, #f5f3ff 100%); border: 1.5px solid var(--primary-light); border-radius: var(--radius-lg); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .optin-banner-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
         .optin-banner-text { flex: 1; min-width: 200px; }
@@ -100,20 +104,30 @@
 
         /* ===== FILTRES ===== */
         .filters-bar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .filter-select { padding: 0.45rem 0.8rem; border: 1.5px solid var(--border); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--text); background: var(--card-bg); cursor: pointer; outline: none; transition: border-color 120ms; appearance: none; padding-right: 1.8rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; }
+        .filter-select { padding: 0.45rem 1.8rem 0.45rem 0.8rem; border: 1.5px solid var(--border); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--text); background: var(--card-bg); cursor: pointer; outline: none; transition: border-color 120ms; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; }
         .filter-select:focus { border-color: var(--primary); }
         .filter-search { flex: 1; min-width: 200px; padding: 0.45rem 0.8rem 0.45rem 2.2rem; border: 1.5px solid var(--border); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 0.82rem; color: var(--text); background: var(--card-bg); outline: none; transition: border-color 120ms; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none'%3E%3Ccircle cx='6' cy='6' r='4.5' stroke='%2371717A' stroke-width='1.5'/%3E%3Cpath d='M10 10l2.5 2.5' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 0.7rem center; }
         .filter-search:focus { border-color: var(--primary); }
         .results-count { font-size: 0.8rem; color: var(--text-sub); font-weight: 600; margin-left: auto; }
 
-        /* ===== GRILLE CARTES ===== */
+        /* ===== GRILLE ===== */
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1rem; }
 
-        /* ===== CARTE ENTREPRISE ===== */
+        /* ===== CARTE ===== */
         .company-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--shadow-sm); transition: transform 160ms, box-shadow 160ms; display: flex; flex-direction: column; gap: 1rem; position: relative; overflow: hidden; }
-        .company-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .company-card:hover:not(.locked) { transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .company-card.is-me { border-color: var(--primary); background: linear-gradient(160deg, var(--primary-50) 0%, var(--card-bg) 60%); }
         .company-card.is-me::before { content: 'Mon entreprise'; position: absolute; top: 0.6rem; right: 0.75rem; font-size: 0.65rem; font-weight: 800; font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary); background: var(--primary-light); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); }
+
+        /* Carte verrouillée */
+        .company-card.locked { cursor: default; }
+        .card-content { display: contents; }
+        .company-card.locked .card-content { filter: blur(5px); pointer-events: none; user-select: none; }
+        .card-lock-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; background: rgba(247,246,244,0.55); backdrop-filter: blur(1px); z-index: 2; border-radius: calc(var(--radius-lg) - 1.5px); }
+        .card-lock-icon { width: 40px; height: 40px; border-radius: 50%; background: white; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-sub); box-shadow: var(--shadow-sm); }
+        .card-lock-cta { background: var(--primary); color: white; font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem; padding: 0.45rem 1rem; border-radius: var(--radius-md); border: none; cursor: pointer; transition: background 120ms; }
+        .card-lock-cta:hover { background: var(--primary-hover); }
+        .card-lock-sub { font-size: 0.7rem; color: var(--text-muted); text-align: center; max-width: 160px; }
 
         .card-header { display: flex; align-items: flex-start; gap: 0.75rem; }
         .company-avatar { width: 38px; height: 38px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-weight: 800; font-size: 0.9rem; color: white; flex-shrink: 0; }
@@ -127,7 +141,7 @@
         .score-C { color: var(--score-C); background: var(--score-C-bg); border-color: var(--score-C-border); }
         .score-D { color: var(--score-D); background: var(--score-D-bg); border-color: var(--score-D-border); }
         .score-E { color: var(--score-E); background: var(--score-E-bg); border-color: var(--score-E-border); }
-        .score-na { color: var(--text-muted); background: var(--bg-alt); border-color: var(--border); font-size: 0.75rem; }
+        .score-na { color: var(--text-muted); background: var(--bg-alt); border-color: var(--border); font-size: 0.8rem; }
 
         .card-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
         .card-metric { background: var(--bg-alt); border-radius: var(--radius-sm); padding: 0.5rem 0.6rem; }
@@ -139,7 +153,7 @@
         .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid var(--border); }
         .card-last-activity { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem; }
         .card-actions { display: flex; gap: 0.4rem; }
-        .card-btn { padding: 0.3rem 0.65rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: none; color: var(--text-sub); transition: all 120ms; display: flex; align-items: center; gap: 0.3rem; }
+        .card-btn { padding: 0.3rem 0.65rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: none; color: var(--text-sub); transition: all 120ms; display: flex; align-items: center; gap: 0.3rem; text-decoration: none; }
         .card-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-50); }
         .card-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
         .card-btn.primary:hover { background: var(--primary-hover); }
@@ -148,8 +162,8 @@
         @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
         .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--bg-alt) 50%, var(--border) 75%); background-size: 600px 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm); }
 
-        /* ===== VIDE / ERREUR ===== */
-        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-sub); }
+        /* ===== VIDE ===== */
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-sub); grid-column: 1/-1; }
         .empty-state i { font-size: 2.5rem; color: var(--border-strong); margin-bottom: 1rem; display: block; }
         .empty-state h3 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.5rem; }
 
@@ -158,7 +172,7 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { background: var(--success); }
 
-        @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } .hero { flex-direction: column; } .hero-stats { width: 100%; justify-content: space-between; } }
+        @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } .hero { flex-direction: column; } .hero-stats { width: 100%; justify-content: space-between; } .gate-banner { flex-direction: column; text-align: center; } }
     </style>
 </head>
 <body>
@@ -169,42 +183,22 @@
             <i class="fa-solid fa-compass"></i> Boussole
         </a>
         <div class="nav-tabs">
-            <a href="/dashboard" class="nav-tab">
-                <i class="fa-solid fa-house"></i><span class="nav-label"> Accueil</span>
-            </a>
-            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','analyse'); return true;">
-                <i class="fa-solid fa-wand-magic-sparkles"></i><span class="nav-label"> Analyser</span>
-            </a>
-            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','evolution'); return true;">
-                <i class="fa-solid fa-chart-line"></i><span class="nav-label"> Pilotage</span>
-            </a>
-            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','benchmark'); return true;">
-                <i class="fa-solid fa-chart-bar"></i><span class="nav-label"> Benchmark</span>
-            </a>
-            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','alertes'); return true;">
-                <i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label"> Alertes</span>
-            </a>
-            <a href="/communaute" class="nav-tab active">
-                <i class="fa-solid fa-users"></i><span class="nav-label"> Communauté</span>
-            </a>
+            <a href="/dashboard" class="nav-tab"><i class="fa-solid fa-house"></i><span class="nav-label"> Accueil</span></a>
+            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','analyse'); return true;"><i class="fa-solid fa-wand-magic-sparkles"></i><span class="nav-label"> Analyser</span></a>
+            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','evolution'); return true;"><i class="fa-solid fa-chart-line"></i><span class="nav-label"> Pilotage</span></a>
+            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','benchmark'); return true;"><i class="fa-solid fa-chart-bar"></i><span class="nav-label"> Benchmark</span></a>
+            <a href="/dashboard" class="nav-tab" onclick="localStorage.setItem('activeTab','alertes'); return true;"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label"> Alertes</span></a>
+            <a href="/communaute" class="nav-tab active"><i class="fa-solid fa-users"></i><span class="nav-label"> Communauté</span></a>
         </div>
     </div>
     <div class="user-menu">
-        <a href="/parametres" class="nav-icon-btn" title="Paramètres">
-            <i class="fa-solid fa-gear"></i>
-        </a>
+        <a href="/parametres" class="nav-icon-btn" title="Paramètres"><i class="fa-solid fa-gear"></i></a>
         <div class="nav-sep"></div>
         <a href="/parametres" class="user-avatar-btn">
-            <div class="user-avatar">
-                {% if user and user.email %}{{ user.email[0].upper() }}{% else %}?{% endif %}
-            </div>
-            <span class="user-name">
-                {% if user and user.email %}{{ user.email.split('@')[0] }}{% else %}Invité{% endif %}
-            </span>
+            <div class="user-avatar">{% if user and user.email %}{{ user.email[0].upper() }}{% else %}?{% endif %}</div>
+            <span class="user-name">{% if user and user.email %}{{ user.email.split('@')[0] }}{% else %}Invité{% endif %}</span>
         </a>
-        <a href="/logout" class="logout-btn" title="Déconnexion">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        </a>
+        <a href="/logout" class="logout-btn" title="Déconnexion"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
     </div>
 </nav>
 
@@ -214,7 +208,7 @@
     <div class="hero">
         <div class="hero-text">
             <h1><i class="fa-solid fa-users" style="color:var(--primary);font-size:1.4rem;vertical-align:middle;margin-right:0.5rem"></i>Communauté PME</h1>
-            <p>Comparez votre évolution avec d'autres PME françaises. Les données sont anonymisées par défaut — chaque entreprise choisit ce qu'elle partage.</p>
+            <p>Voyez comment évoluent les autres PME françaises. Partagez vos données pour débloquer l'accès complet — une règle valable pour tous.</p>
         </div>
         <div class="hero-stats">
             <div class="hero-stat">
@@ -223,26 +217,41 @@
             </div>
             <div class="hero-stat">
                 <div class="hero-stat-num" id="statActives">—</div>
-                <div class="hero-stat-label">Actives ce mois</div>
+                <div class="hero-stat-label">Actives</div>
             </div>
             <div class="hero-stat">
                 <div class="hero-stat-num" id="statScoreA">—</div>
-                <div class="hero-stat-label">Score A ou B</div>
+                <div class="hero-stat-label">Score A/B</div>
             </div>
         </div>
     </div>
 
-    <!-- OPT-IN BANNER -->
-    <div class="optin-banner" id="optinBanner">
-        <div class="optin-banner-icon"><i class="fa-solid fa-eye"></i></div>
+    <!-- GATE BANNER (non-partagé) -->
+    <div class="gate-banner" id="gateBanner" style="display:none">
+        <div class="gate-banner-icon"><i class="fa-solid fa-lock"></i></div>
+        <div class="gate-banner-text">
+            <strong>Partagez pour voir les autres entreprises</strong>
+            <p>Les données des autres PME sont verrouillées. En partageant les vôtres, vous débloquez l'accès à toute la communauté — c'est anonyme par défaut, vous contrôlez votre visibilité.</p>
+        </div>
+        <div class="gate-banner-actions">
+            <button class="btn-unlock" onclick="toggleOptIn()">
+                <i class="fa-solid fa-unlock"></i> Partager mes données
+            </button>
+            <span class="btn-unlock-sub"><i class="fa-solid fa-shield-halved"></i> Anonyme par défaut</span>
+        </div>
+    </div>
+
+    <!-- OPTIN BANNER (partagé) -->
+    <div class="optin-banner" id="optinBanner" style="display:none">
+        <div class="optin-banner-icon"><i class="fa-solid fa-circle-check"></i></div>
         <div class="optin-banner-text">
-            <strong>Rendre mon entreprise visible</strong>
-            <span id="optinDesc">Actuellement, votre entreprise apparaît sous un nom anonyme. Activez l'option pour que les autres voient votre nom d'entreprise.</span>
+            <strong id="optinTitle">Accès complet débloqué</strong>
+            <span id="optinDesc">Vous partagez vos données — vous pouvez voir toutes les entreprises de la communauté.</span>
         </div>
         <div class="optin-toggle-wrap">
-            <span class="optin-toggle-label" id="optinLabel">Anonyme</span>
+            <span class="optin-toggle-label" id="optinLabel">Partage actif</span>
             <label class="toggle-switch">
-                <input type="checkbox" id="optinToggle" onchange="toggleOptIn()">
+                <input type="checkbox" id="optinToggle" onchange="toggleOptIn()" checked>
                 <span class="toggle-track"></span>
                 <span class="toggle-thumb"></span>
             </label>
@@ -255,70 +264,35 @@
             <option value="">Tous les secteurs</option>
             <option value="Commerce">Commerce</option>
             <option value="BTP">BTP / Construction</option>
-            <option value="Services">Services aux entreprises</option>
-            <option value="Industrie">Industrie / Production</option>
-            <option value="Restauration">Restauration / Hôtellerie</option>
+            <option value="Services">Services</option>
+            <option value="Industrie">Industrie</option>
+            <option value="Restauration">Restauration</option>
             <option value="Santé">Santé / Social</option>
-            <option value="Transport">Transport / Logistique</option>
-            <option value="Numérique">Numérique / Tech</option>
+            <option value="Transport">Transport</option>
+            <option value="Numérique">Numérique</option>
             <option value="Autre">Autre</option>
         </select>
         <select class="filter-select" id="filterTaille" onchange="applyFilters()">
-            <option value="">Toutes les tailles</option>
-            <option value="1-5">1 à 5 salariés</option>
-            <option value="6-20">6 à 20 salariés</option>
-            <option value="21-50">21 à 50 salariés</option>
-            <option value="51+">Plus de 50 salariés</option>
+            <option value="">Toutes tailles</option>
+            <option value="1-5">1–5 salariés</option>
+            <option value="6-20">6–20 salariés</option>
+            <option value="21-50">21–50 salariés</option>
+            <option value="51+">+ 50 salariés</option>
         </select>
         <select class="filter-select" id="filterTri" onchange="applyFilters()">
-            <option value="score">Trier par score</option>
-            <option value="evolution">Trier par évolution</option>
-            <option value="kpis">Trier par nb KPIs</option>
-            <option value="recent">Trier par activité récente</option>
+            <option value="score">Par score</option>
+            <option value="evolution">Par évolution</option>
+            <option value="kpis">Par nb KPIs</option>
         </select>
-        <input type="text" class="filter-search" id="filterSearch" placeholder="Rechercher un secteur, une taille…" oninput="applyFilters()">
+        <input type="text" class="filter-search" id="filterSearch" placeholder="Rechercher…" oninput="applyFilters()">
         <span class="results-count" id="resultsCount"></span>
     </div>
 
     <!-- GRILLE -->
     <div class="cards-grid" id="cardsGrid">
-        <!-- Skeletons de chargement -->
-        <div class="company-card" style="opacity:0.6">
-            <div class="card-header">
-                <div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div>
-                <div style="flex:1"><div class="skeleton" style="height:14px;width:70%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:45%"></div></div>
-                <div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div>
-            </div>
-            <div class="card-metrics">
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-            </div>
-        </div>
-        <div class="company-card" style="opacity:0.4">
-            <div class="card-header">
-                <div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div>
-                <div style="flex:1"><div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:40%"></div></div>
-                <div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div>
-            </div>
-            <div class="card-metrics">
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-            </div>
-        </div>
-        <div class="company-card" style="opacity:0.2">
-            <div class="card-header">
-                <div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div>
-                <div style="flex:1"><div class="skeleton" style="height:14px;width:55%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:35%"></div></div>
-                <div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div>
-            </div>
-            <div class="card-metrics">
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-                <div class="skeleton" style="height:52px"></div>
-            </div>
-        </div>
+        <div class="company-card" style="opacity:0.6"><div class="card-header"><div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div><div style="flex:1"><div class="skeleton" style="height:14px;width:70%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:45%"></div></div><div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div></div><div class="card-metrics"><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div></div></div>
+        <div class="company-card" style="opacity:0.35"><div class="card-header"><div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div><div style="flex:1"><div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:40%"></div></div><div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div></div><div class="card-metrics"><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div></div></div>
+        <div class="company-card" style="opacity:0.15"><div class="card-header"><div class="skeleton" style="width:38px;height:38px;border-radius:var(--radius-md)"></div><div style="flex:1"><div class="skeleton" style="height:14px;width:55%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:35%"></div></div><div class="skeleton" style="width:36px;height:36px;border-radius:var(--radius-md)"></div></div><div class="card-metrics"><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div><div class="skeleton" style="height:52px"></div></div></div>
     </div>
 </div>
 
@@ -326,27 +300,33 @@
 
 <script>
 let allCards = [];
+let viewerIsPublic = false;
 
-const AVATAR_COLORS = [
-    '#2563EB','#7C3AED','#0D9488','#D97706','#DB2777','#0891B2','#65A30D','#EA580C'
-];
+const AVATAR_COLORS = ['#2563EB','#7C3AED','#0D9488','#D97706','#DB2777','#0891B2','#65A30D','#EA580C'];
 function avatarColor(id) { return AVATAR_COLORS[id % AVATAR_COLORS.length]; }
 
 function tailleTranche(nb) {
     if (!nb || nb === '—') return '—';
     const n = parseInt(nb);
     if (isNaN(n)) return nb;
-    if (n <= 5)  return '1-5';
+    if (n <= 5) return '1-5';
     if (n <= 20) return '6-20';
     if (n <= 50) return '21-50';
     return '51+';
 }
 
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderCard(c) {
-    const name  = c.nom_entreprise || `Entreprise #${c.id}`;
+    const name     = c.nom_entreprise || `Entreprise #${c.id}`;
     const initials = name.slice(0, 2).toUpperCase();
-    const scoreClass = ['A','B','C','D','E'].includes(c.note) ? `score-${c.note}` : 'score-na';
-    const scoreTxt = ['A','B','C','D','E'].includes(c.note) ? c.note : '—';
+    const noteOk   = ['A','B','C','D','E'].includes(c.note);
+    const scoreClass = noteOk ? `score-${c.note}` : 'score-na';
+    const scoreTxt   = noteOk ? c.note : '—';
+
     const evo = c.evolution;
     let evoHtml = '<span class="card-metric-val">—</span>';
     if (evo !== null && evo !== undefined) {
@@ -355,8 +335,16 @@ function renderCard(c) {
         evoHtml = `<span class="card-metric-val ${cls}">${sign}${evo.toFixed(1)}</span>`;
     }
 
-    return `
-    <div class="company-card${c.is_me ? ' is-me' : ''}" data-id="${c.id}" data-secteur="${c.secteur}" data-taille="${tailleTranche(c.nb_employes)}" data-score="${c.score || 0}" data-evo="${c.evolution || 0}" data-kpis="${c.nb_kpis}" data-date="${c.derniere_activite}">
+    const lockedOverlay = c.locked ? `
+        <div class="card-lock-overlay">
+            <div class="card-lock-icon"><i class="fa-solid fa-lock"></i></div>
+            <button class="card-lock-cta" onclick="triggerOptIn()">
+                <i class="fa-solid fa-unlock"></i> Partager pour voir
+            </button>
+            <div class="card-lock-sub">Partagez vos données pour accéder aux informations de cette entreprise</div>
+        </div>` : '';
+
+    const innerContent = `
         <div class="card-header">
             <div class="company-avatar" style="background:${avatarColor(c.id)}">${initials}</div>
             <div class="card-header-text">
@@ -366,52 +354,42 @@ function renderCard(c) {
                     ${c.nb_employes && c.nb_employes !== '—' ? `<span style="color:var(--border-strong)">·</span> ${escHtml(c.nb_employes)} sal.` : ''}
                 </div>
             </div>
-            <div class="score-badge ${scoreClass}" title="Score global">${scoreTxt}</div>
+            <div class="score-badge ${scoreClass}">${scoreTxt}</div>
         </div>
         <div class="card-metrics">
-            <div class="card-metric">
-                <div class="card-metric-val">${c.score !== null ? c.score : '—'}</div>
-                <div class="card-metric-label">Score</div>
-            </div>
-            <div class="card-metric">
-                ${evoHtml}
-                <div class="card-metric-label">Évolution</div>
-            </div>
-            <div class="card-metric">
-                <div class="card-metric-val">${c.nb_kpis}</div>
-                <div class="card-metric-label">KPIs</div>
-            </div>
+            <div class="card-metric"><div class="card-metric-val">${c.score !== null ? c.score : '—'}</div><div class="card-metric-label">Score</div></div>
+            <div class="card-metric">${evoHtml}<div class="card-metric-label">Évolution</div></div>
+            <div class="card-metric"><div class="card-metric-val">${c.nb_kpis !== null ? c.nb_kpis : '—'}</div><div class="card-metric-label">KPIs</div></div>
         </div>
         <div class="card-footer">
-            <div class="card-last-activity">
-                <i class="fa-regular fa-clock"></i> ${escHtml(c.derniere_activite)}
-            </div>
-            ${c.is_me ? `
-            <div class="card-actions">
-                <a href="/parametres" class="card-btn primary"><i class="fa-solid fa-gear"></i> Mon profil</a>
-            </div>` : `
-            <div class="card-actions">
-                <button class="card-btn" onclick="void(0)" title="Comparer (bientôt disponible)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Comparer</button>
-            </div>`}
-        </div>
+            <div class="card-last-activity"><i class="fa-regular fa-clock"></i> ${escHtml(c.derniere_activite)}</div>
+            ${c.is_me
+                ? `<div class="card-actions"><a href="/parametres" class="card-btn primary"><i class="fa-solid fa-gear"></i> Mon profil</a></div>`
+                : `<div class="card-actions"><button class="card-btn" title="Bientôt disponible" onclick="void(0)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Comparer</button></div>`
+            }
+        </div>`;
+
+    return `
+    <div class="company-card${c.is_me ? ' is-me' : ''}${c.locked ? ' locked' : ''}"
+         data-secteur="${c.secteur}" data-taille="${tailleTranche(c.nb_employes)}"
+         data-score="${c.score || 0}" data-evo="${c.evolution || 0}" data-kpis="${c.nb_kpis || 0}">
+        ${lockedOverlay}
+        <div class="card-content">${innerContent}</div>
     </div>`;
 }
 
-function escHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function applyFilters() {
-    const secteur = document.getElementById('filterSecteur').value.toLowerCase();
+    const secteur = document.getElementById('filterSecteur').value;
     const taille  = document.getElementById('filterTaille').value;
     const tri     = document.getElementById('filterTri').value;
     const search  = document.getElementById('filterSearch').value.toLowerCase();
 
     let filtered = allCards.filter(c => {
-        if (secteur && !c.secteur.toLowerCase().includes(secteur)) return false;
+        if (secteur && !c.secteur.toLowerCase().includes(secteur.toLowerCase())) return false;
         if (taille  && tailleTranche(c.nb_employes) !== taille) return false;
-        if (search  && !c.secteur.toLowerCase().includes(search) && !String(c.nb_employes).toLowerCase().includes(search) && !c.nom_entreprise.toLowerCase().includes(search)) return false;
+        if (search  && !c.secteur.toLowerCase().includes(search)
+                    && !String(c.nb_employes).toLowerCase().includes(search)
+                    && !c.nom_entreprise.toLowerCase().includes(search)) return false;
         return true;
     });
 
@@ -420,17 +398,55 @@ function applyFilters() {
         if (!a.is_me && b.is_me) return 1;
         if (tri === 'score')     return (b.score || 0) - (a.score || 0);
         if (tri === 'evolution') return (b.evolution || 0) - (a.evolution || 0);
-        if (tri === 'kpis')      return b.nb_kpis - a.nb_kpis;
-        return 0; // recent: already sorted by date from server
+        if (tri === 'kpis')      return (b.nb_kpis || 0) - (a.nb_kpis || 0);
+        return 0;
     });
 
     const grid = document.getElementById('cardsGrid');
-    if (filtered.length === 0) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i><h3>Aucun résultat</h3><p>Essayez de modifier vos filtres.</p></div>`;
-    } else {
-        grid.innerHTML = filtered.map(renderCard).join('');
-    }
+    grid.innerHTML = filtered.length === 0
+        ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><h3>Aucun résultat</h3><p>Modifiez vos filtres.</p></div>`
+        : filtered.map(renderCard).join('');
+
     document.getElementById('resultsCount').textContent = `${filtered.length} entreprise${filtered.length > 1 ? 's' : ''}`;
+}
+
+function updateBanners(isPublic) {
+    viewerIsPublic = isPublic;
+    document.getElementById('gateBanner').style.display   = isPublic ? 'none'  : 'flex';
+    document.getElementById('optinBanner').style.display  = isPublic ? 'flex'  : 'none';
+    if (isPublic) {
+        document.getElementById('optinToggle').checked = true;
+        document.getElementById('optinLabel').textContent = 'Partage actif';
+        document.getElementById('optinTitle').textContent = 'Accès complet débloqué ✓';
+        document.getElementById('optinDesc').textContent  = 'Vous partagez vos données — vous voyez toutes les entreprises de la communauté.';
+    }
+}
+
+function triggerOptIn() {
+    // Scroll up to gate banner and highlight it
+    document.getElementById('gateBanner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('gateBanner').style.outline = '3px solid rgba(255,255,255,0.6)';
+    setTimeout(() => { document.getElementById('gateBanner').style.outline = ''; }, 1500);
+}
+
+async function toggleOptIn() {
+    try {
+        const r = await fetch('/api/communaute/opt-in', { method: 'POST', headers: {'Content-Type':'application/json'} });
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+
+        if (data.profil_public) {
+            showToast('Données partagées — accès complet débloqué ✓', 'success');
+        } else {
+            showToast('Partage désactivé — accès verrouillé');
+        }
+        await loadFeed();
+    } catch(e) {
+        showToast('Erreur : ' + e.message);
+        // Annuler le toggle visuel
+        const tog = document.getElementById('optinToggle');
+        if (tog) tog.checked = !tog.checked;
+    }
 }
 
 async function loadFeed() {
@@ -440,47 +456,17 @@ async function loadFeed() {
         if (!data.success) throw new Error(data.error);
 
         allCards = data.cards;
+        updateBanners(data.viewer_is_public);
 
-        // Stats hero
+        // Stats hero (on affiche le total même si verrouillé pour créer de la curiosité)
         document.getElementById('statTotal').textContent = data.total;
+        document.getElementById('statActives').textContent = data.total;
         const scoreAB = data.cards.filter(c => c.note === 'A' || c.note === 'B').length;
-        document.getElementById('statScoreA').textContent = scoreAB;
-        // "Actives ce mois" = approximation : tous ceux qui ont une periode
-        document.getElementById('statActives').textContent = data.cards.length;
-
-        // Opt-in état initial
-        const me = data.cards.find(c => c.is_me);
-        if (me) {
-            document.getElementById('optinToggle').checked = me.is_public;
-            updateOptinUI(me.is_public);
-        }
+        document.getElementById('statScoreA').textContent = data.viewer_is_public ? scoreAB : '?';
 
         applyFilters();
     } catch(e) {
-        document.getElementById('cardsGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-triangle-exclamation"></i><h3>Impossible de charger le feed</h3><p>${e.message}</p></div>`;
-    }
-}
-
-function updateOptinUI(isPublic) {
-    document.getElementById('optinLabel').textContent = isPublic ? 'Visible' : 'Anonyme';
-    document.getElementById('optinDesc').textContent = isPublic
-        ? 'Votre entreprise est visible avec son nom. Les autres PME peuvent vous identifier.'
-        : 'Actuellement, votre entreprise apparaît sous un nom anonyme. Activez l\'option pour que les autres voient votre nom d\'entreprise.';
-}
-
-async function toggleOptIn() {
-    try {
-        const r = await fetch('/api/communaute/opt-in', { method: 'POST', headers: {'Content-Type':'application/json'} });
-        const data = await r.json();
-        if (!data.success) throw new Error(data.error);
-        updateOptinUI(data.profil_public);
-        showToast(data.profil_public ? 'Profil rendu public ✓' : 'Profil repassé anonyme ✓', 'success');
-        // Recharger le feed pour refléter le changement
-        loadFeed();
-    } catch(e) {
-        showToast('Erreur : ' + e.message);
-        // Remettre le toggle dans l'état précédent
-        document.getElementById('optinToggle').checked = !document.getElementById('optinToggle').checked;
+        document.getElementById('cardsGrid').innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><h3>Impossible de charger</h3><p>${e.message}</p></div>`;
     }
 }
 
@@ -488,7 +474,7 @@ function showToast(msg, type = '') {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.className = 'toast show' + (type ? ' ' + type : '');
-    setTimeout(() => { t.className = 'toast'; }, 3000);
+    setTimeout(() => { t.className = 'toast'; }, 3500);
 }
 
 loadFeed();
