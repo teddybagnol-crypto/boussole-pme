@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mot de passe oublié — Boussole PME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #F7F6F4; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; -webkit-font-smoothing: antialiased; }
+
+        .card {
+            background: white;
+            border: 1.5px solid #E4E4E7;
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 4px 24px rgba(27,58,107,0.08);
+        }
+
+        .brand {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800; font-size: 1.1rem; color: #1B3A6B;
+            text-decoration: none; margin-bottom: 2rem;
+        }
+        .brand-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #1B3A6B, #2563EB); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; }
+
+        .icon-wrap {
+            width: 56px; height: 56px;
+            background: #EFF6FF;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #2563EB;
+            margin-bottom: 1.25rem;
+        }
+
+        h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.4rem; color: #18181B; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+        .subtitle { color: #71717A; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.75rem; }
+
+        .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.4rem; }
+        .input-wrap { position: relative; margin-bottom: 1.25rem; }
+        .input-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #A1A1AA; font-size: 0.85rem; pointer-events: none; }
+        .form-input {
+            width: 100%; padding: 0.72rem 0.9rem 0.72rem 2.4rem;
+            border: 1.5px solid #E4E4E7; border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #18181B;
+            outline: none; transition: border-color 150ms, box-shadow 150ms;
+        }
+        .form-input::placeholder { color: #A1A1AA; }
+        .form-input:focus { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+        .btn {
+            width: 100%; padding: 0.8rem;
+            background: #2563EB; color: white; border: none; border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.92rem; font-weight: 700;
+            cursor: pointer; transition: background 150ms, box-shadow 150ms;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+        .btn:hover { background: #1E4D8C; }
+        .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+        .alert { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.83rem; font-weight: 500; margin-bottom: 1rem; display: none; align-items: center; gap: 0.5rem; }
+        .alert.error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .alert.success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; flex-direction: column; align-items: flex-start; }
+        .alert.show    { display: flex; }
+
+        .back-link { text-align: center; margin-top: 1.25rem; font-size: 0.83rem; color: #71717A; }
+        .back-link a { color: #2563EB; text-decoration: none; font-weight: 600; }
+        .back-link a:hover { text-decoration: underline; }
+
+        /* État succès */
+        .success-state { display: none; text-align: center; }
+        .success-state .big-icon { font-size: 2.5rem; color: #16A34A; margin-bottom: 1rem; }
+        .success-state h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem; color: #18181B; margin-bottom: 0.5rem; }
+        .success-state p { color: #71717A; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
+        .success-state .hint { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 0.9rem 1rem; font-size: 0.82rem; color: #166534; text-align: left; line-height: 1.55; }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <a href="/login" class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-compass"></i></div>
+        Boussole PME
+    </a>
+
+    <!-- Formulaire -->
+    <div id="formState">
+        <div class="icon-wrap"><i class="fa-solid fa-key"></i></div>
+        <h1>Mot de passe oublié ?</h1>
+        <p class="subtitle">Saisissez votre adresse e-mail. Si un compte existe, vous recevrez un lien de réinitialisation valable <strong>1 heure</strong>.</p>
+
+        <div class="alert error" id="alertError">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="alertErrorMsg"></span>
+        </div>
+
+        <label class="form-label" for="email">Adresse e-mail</label>
+        <div class="input-wrap">
+            <i class="fa-regular fa-envelope input-icon"></i>
+            <input class="form-input" type="email" id="email" placeholder="vous@entreprise.fr" autocomplete="email"
+                   onkeydown="if(event.key==='Enter') envoyer()">
+        </div>
+
+        <button class="btn" id="btnEnvoyer" onclick="envoyer()">
+            <i class="fa-solid fa-paper-plane"></i> Envoyer le lien
+        </button>
+
+        <div class="back-link">
+            <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
+        </div>
+    </div>
+
+    <!-- Succès -->
+    <div class="success-state" id="successState">
+        <div class="big-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2>Email envoyé !</h2>
+        <p>Si un compte est associé à <strong id="emailSent"></strong>, vous recevrez un email dans les prochaines minutes.</p>
+        <div class="hint">
+            <strong>Vous ne voyez rien ?</strong> Vérifiez vos spams ou courriers indésirables. Le lien expire dans 1 heure.
+        </div>
+        <div class="back-link" style="margin-top:1.25rem">
+            <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function envoyer() {
+    const btn   = document.getElementById('btnEnvoyer');
+    const email = document.getElementById('email').value.trim();
+
+    if (!email) {
+        showError('Veuillez saisir votre adresse e-mail.');
+        return;
+    }
+
+    hideError();
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Envoi en cours…';
+
+    try {
+        const form = new FormData();
+        form.append('email', email);
+        const resp = await fetch('/mot-de-passe-oublie', { method: 'POST', body: form });
+        let data;
+        try { data = await resp.json(); } catch(_) { data = { success: false, error: `Erreur serveur (${resp.status})` }; }
+
+        if (data.success) {
+            document.getElementById('emailSent').textContent = email;
+            document.getElementById('formState').style.display    = 'none';
+            document.getElementById('successState').style.display = 'block';
+        } else {
+            showError(data.error || 'Une erreur est survenue.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Envoyer le lien';
+        }
+    } catch(e) {
+        showError('Impossible de joindre le serveur.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Envoyer le lien';
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('alertError');
+    document.getElementById('alertErrorMsg').textContent = msg;
+    el.classList.add('show');
+}
+function hideError() {
+    document.getElementById('alertError').classList.remove('show');
+}
+</script>
+</body>
+</html>

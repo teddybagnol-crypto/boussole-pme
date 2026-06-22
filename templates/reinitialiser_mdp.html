@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveau mot de passe — Boussole PME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #F7F6F4; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; -webkit-font-smoothing: antialiased; }
+
+        .card { background: white; border: 1.5px solid #E4E4E7; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 4px 24px rgba(27,58,107,0.08); }
+
+        .brand { display: flex; align-items: center; gap: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; color: #1B3A6B; text-decoration: none; margin-bottom: 2rem; }
+        .brand-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #1B3A6B, #2563EB); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; }
+
+        .icon-wrap { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.25rem; }
+        .icon-wrap.blue   { background: #EFF6FF; color: #2563EB; }
+        .icon-wrap.orange { background: #FEF3C7; color: #D97706; }
+        .icon-wrap.green  { background: #DCFCE7; color: #16A34A; }
+
+        h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.4rem; color: #18181B; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+        .subtitle { color: #71717A; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.75rem; }
+
+        .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.4rem; }
+        .input-wrap { position: relative; margin-bottom: 0.75rem; }
+        .input-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #A1A1AA; font-size: 0.85rem; pointer-events: none; }
+        .toggle-pwd { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); color: #A1A1AA; font-size: 0.85rem; cursor: pointer; background: none; border: none; padding: 0; }
+        .toggle-pwd:hover { color: #71717A; }
+        .form-input { width: 100%; padding: 0.72rem 2.4rem 0.72rem 2.4rem; border: 1.5px solid #E4E4E7; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #18181B; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+        .form-input::placeholder { color: #A1A1AA; }
+        .form-input:focus { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+        .password-strength { height: 3px; background: #E4E4E7; border-radius: 99px; margin-bottom: 0.3rem; overflow: hidden; }
+        .password-strength-bar { height: 100%; border-radius: 99px; width: 0%; transition: width 200ms, background 200ms; }
+        .strength-hint { font-size: 0.72rem; color: #A1A1AA; margin-bottom: 1rem; }
+
+        .btn { width: 100%; padding: 0.8rem; background: #2563EB; color: white; border: none; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: background 150ms, box-shadow 150ms; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn:hover { background: #1E4D8C; }
+        .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+        .btn.danger { background: #DC2626; box-shadow: 0 4px 12px rgba(220,38,38,0.25); }
+        .btn.danger:hover { background: #B91C1C; }
+
+        .alert { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.83rem; font-weight: 500; margin-bottom: 1rem; display: none; align-items: center; gap: 0.5rem; }
+        .alert.error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .alert.show    { display: flex; }
+
+        .back-link { text-align: center; margin-top: 1.25rem; font-size: 0.83rem; color: #71717A; }
+        .back-link a { color: #2563EB; text-decoration: none; font-weight: 600; }
+
+        /* succès */
+        .success-state { display: none; text-align: center; }
+        .success-state .big-icon { font-size: 2.5rem; color: #16A34A; margin-bottom: 1rem; }
+        .success-state h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem; color: #18181B; margin-bottom: 0.5rem; }
+        .success-state p { color: #71717A; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <a href="/login" class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-compass"></i></div>
+        Boussole PME
+    </a>
+
+    {% if expire %}
+    <!-- Lien expiré -->
+    <div>
+        <div class="icon-wrap orange"><i class="fa-solid fa-clock"></i></div>
+        <h1>Lien expiré</h1>
+        <p class="subtitle">Ce lien de réinitialisation a expiré ou a déjà été utilisé. Les liens sont valables 1 heure.</p>
+        <a href="/mot-de-passe-oublie">
+            <button class="btn" style="text-decoration:none">
+                <i class="fa-solid fa-rotate-right"></i> Faire une nouvelle demande
+            </button>
+        </a>
+        <div class="back-link">
+            <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Formulaire reset -->
+    <div id="formState">
+        <div class="icon-wrap blue"><i class="fa-solid fa-shield-halved"></i></div>
+        <h1>Nouveau mot de passe</h1>
+        <p class="subtitle">Choisissez un mot de passe solide d'au moins 8 caractères.</p>
+
+        <div class="alert error" id="alertError">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="alertErrorMsg"></span>
+        </div>
+
+        <label class="form-label" for="password">Nouveau mot de passe</label>
+        <div class="input-wrap">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input class="form-input" type="password" id="password" placeholder="8 caractères minimum"
+                   oninput="checkStrength(this.value)" onkeydown="if(event.key==='Enter') reinitialiser()">
+            <button class="toggle-pwd" type="button" onclick="toggleVisu('password', this)">
+                <i class="fa-regular fa-eye"></i>
+            </button>
+        </div>
+        <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+        <div class="strength-hint" id="strengthHint"></div>
+
+        <label class="form-label" for="confirm">Confirmer le mot de passe</label>
+        <div class="input-wrap" style="margin-bottom:1.25rem">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input class="form-input" type="password" id="confirm" placeholder="Répétez le mot de passe"
+                   onkeydown="if(event.key==='Enter') reinitialiser()">
+            <button class="toggle-pwd" type="button" onclick="toggleVisu('confirm', this)">
+                <i class="fa-regular fa-eye"></i>
+            </button>
+        </div>
+
+        <button class="btn" id="btnReset" onclick="reinitialiser()">
+            <i class="fa-solid fa-floppy-disk"></i> Enregistrer le nouveau mot de passe
+        </button>
+
+        <div class="back-link">
+            <a href="/login"><i class="fa-solid fa-arrow-left" style="font-size:0.75rem"></i> Retour à la connexion</a>
+        </div>
+    </div>
+
+    <!-- Succès -->
+    <div class="success-state" id="successState">
+        <div class="big-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2>Mot de passe mis à jour !</h2>
+        <p>Votre mot de passe a bien été modifié. Vous pouvez maintenant vous connecter.</p>
+        <a href="/login">
+            <button class="btn"><i class="fa-solid fa-arrow-right-to-bracket"></i> Se connecter</button>
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+const TOKEN = "{{ token }}";
+
+function checkStrength(pwd) {
+    const bar  = document.getElementById('strengthBar');
+    const hint = document.getElementById('strengthHint');
+    if (!pwd) { bar.style.width = '0'; hint.textContent = ''; return; }
+    let score = 0;
+    if (pwd.length >= 8)  score++;
+    if (pwd.length >= 12) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    const levels = [
+        { w: '15%', bg: '#DC2626', txt: 'Trop faible' },
+        { w: '35%', bg: '#EA580C', txt: 'Faible' },
+        { w: '55%', bg: '#D97706', txt: 'Moyen' },
+        { w: '80%', bg: '#0D9488', txt: 'Bon' },
+        { w: '100%', bg: '#15803D', txt: 'Excellent' },
+    ];
+    const lvl = levels[Math.min(score, 4)];
+    bar.style.width = lvl.w; bar.style.background = lvl.bg;
+    hint.textContent = lvl.txt; hint.style.color = lvl.bg;
+}
+
+function toggleVisu(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+
+async function reinitialiser() {
+    const btn     = document.getElementById('btnReset');
+    const pwd     = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm').value;
+
+    hideError();
+    if (pwd.length < 8)   { showError('Le mot de passe doit faire au moins 8 caractères.'); return; }
+    if (pwd !== confirm)  { showError('Les deux mots de passe ne correspondent pas.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Enregistrement…';
+
+    try {
+        const form = new FormData();
+        form.append('password', pwd);
+        const resp = await fetch(`/reinitialiser-mot-de-passe/${TOKEN}`, { method: 'POST', body: form });
+        let data;
+        try { data = await resp.json(); } catch(_) { data = { success: false, error: `Erreur serveur (${resp.status})` }; }
+
+        if (data.success) {
+            document.getElementById('formState').style.display    = 'none';
+            document.getElementById('successState').style.display = 'block';
+        } else {
+            showError(data.error || 'Une erreur est survenue.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Enregistrer le nouveau mot de passe';
+        }
+    } catch(e) {
+        showError('Impossible de joindre le serveur.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Enregistrer le nouveau mot de passe';
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('alertError');
+    document.getElementById('alertErrorMsg').textContent = msg;
+    el.classList.add('show');
+}
+function hideError() {
+    document.getElementById('alertError').classList.remove('show');
+}
+</script>
+</body>
+</html>

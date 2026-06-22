@@ -4,17 +4,19 @@ import json
 import zipfile
 import tempfile
 import warnings
+import secrets
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import groq
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 from flask import Flask, render_template, request, jsonify, redirect, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_session import Session
+from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LassoCV, LinearRegression
@@ -40,6 +42,15 @@ login_manager.login_view = 'login'
 app.config['SESSION_TYPE'] = 'sqlalchemy'
 app.config['SESSION_SQLALCHEMY'] = db
 Session(app)
+
+# ─── Flask-Mail ───────────────────────────
+app.config['MAIL_SERVER']   = os.environ.get('MAIL_SERVER',   'smtp.gmail.com')
+app.config['MAIL_PORT']     = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS']  = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'noreply@boussole-pme.fr')
+mail = Mail(app)
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
@@ -96,6 +107,13 @@ class UserPreferences(db.Model):
     notif_rapport    = db.Column(db.Boolean,     default=False)
     freq_resume      = db.Column(db.String(20),  default='hebdomadaire')
     profil_public    = db.Column(db.Boolean,     default=False)
+
+class PasswordResetToken(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token      = db.Column(db.String(100), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used       = db.Column(db.Boolean, default=False)
 
 
 # ─────────────────────────────────────────
@@ -1660,6 +1678,93 @@ def parametres_supprimer_compte():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
+
+
+# ─────────────────────────────────────────
+# MOT DE PASSE OUBLIÉ
+# ─────────────────────────────────────────
+
+@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
+def mot_de_passe_oublie():
+    if request.method == 'POST':
+        try:
+            email = request.form.get('email', '').strip().lower()
+            user  = User.query.filter_by(email=email).first()
+
+            # On répond toujours "succès" pour ne pas révéler si l'email existe
+            if user:
+                # Supprimer les anciens tokens non utilisés pour cet utilisateur
+                PasswordResetToken.query.filter_by(user_id=user.id, used=False).delete()
+
+                token      = secrets.token_urlsafe(48)
+                expires_at = datetime.utcnow() + timedelta(hours=1)
+                prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
+                db.session.add(prt)
+                db.session.commit()
+
+                reset_url = request.host_url.rstrip('/') + f'/reinitialiser-mot-de-passe/{token}'
+
+                mail_configured = bool(app.config.get('MAIL_USERNAME'))
+                if mail_configured:
+                    try:
+                        msg = Message(
+                            subject='Réinitialisation de votre mot de passe — Boussole PME',
+                            recipients=[user.email],
+                            html=f"""
+                            <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:2rem">
+                                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:#1B3A6B;margin-bottom:1.5rem">
+                                    <span style="color:#2563EB">⊙</span> Boussole PME
+                                </div>
+                                <h2 style="font-size:1.2rem;color:#18181B;margin-bottom:0.75rem">Réinitialisez votre mot de passe</h2>
+                                <p style="color:#71717A;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem">
+                                    Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous — le lien est valable <strong>1 heure</strong>.
+                                </p>
+                                <a href="{reset_url}" style="display:inline-block;background:#2563EB;color:white;text-decoration:none;padding:0.75rem 1.75rem;border-radius:10px;font-weight:700;font-size:0.9rem">
+                                    Réinitialiser mon mot de passe →
+                                </a>
+                                <p style="color:#A1A1AA;font-size:0.78rem;margin-top:1.5rem;line-height:1.5">
+                                    Si vous n'avez pas fait cette demande, ignorez simplement cet email. Votre mot de passe reste inchangé.
+                                </p>
+                                <hr style="border:none;border-top:1px solid #E4E4E7;margin:1.5rem 0">
+                                <p style="color:#A1A1AA;font-size:0.75rem">© 2025 Boussole PME</p>
+                            </div>
+                            """
+                        )
+                        mail.send(msg)
+                    except Exception as mail_err:
+                        print('ERREUR envoi email :', str(mail_err))
+
+            return jsonify({'success': True})
+        except Exception as e:
+            print('ERREUR /mot-de-passe-oublie :', str(e))
+            return jsonify({'success': False, 'error': str(e)})
+    return render_template('mot_de_passe_oublie.html')
+
+
+@app.route('/reinitialiser-mot-de-passe/<token>', methods=['GET', 'POST'])
+def reinitialiser_mot_de_passe(token):
+    prt = PasswordResetToken.query.filter_by(token=token, used=False).first()
+
+    if not prt or prt.expires_at < datetime.utcnow():
+        return render_template('reinitialiser_mdp.html', token=token, expire=True)
+
+    if request.method == 'POST':
+        try:
+            new_password = request.form.get('password', '')
+            if len(new_password) < 8:
+                return jsonify({'success': False, 'error': 'Le mot de passe doit faire au moins 8 caractères.'})
+            user = db.session.get(User, prt.user_id)
+            if not user:
+                return jsonify({'success': False, 'error': 'Utilisateur introuvable.'})
+            user.password = generate_password_hash(new_password)
+            prt.used = True
+            db.session.commit()
+            return jsonify({'success': True})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)})
+
+    return render_template('reinitialiser_mdp.html', token=token, expire=False)
 
 
 # ─────────────────────────────────────────
