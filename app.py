@@ -95,6 +95,7 @@ class UserPreferences(db.Model):
     notif_score      = db.Column(db.Boolean,     default=True)
     notif_rapport    = db.Column(db.Boolean,     default=False)
     freq_resume      = db.Column(db.String(20),  default='hebdomadaire')
+    profil_public    = db.Column(db.Boolean,     default=False)
 
 
 # ─────────────────────────────────────────
@@ -1633,6 +1634,88 @@ def parametres_supprimer_compte():
         User.query.filter_by(id=uid).delete()
         db.session.commit()
         return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ─────────────────────────────────────────
+# COMMUNAUTÉ
+# ─────────────────────────────────────────
+
+@app.route('/communaute')
+@login_required
+def communaute():
+    return render_template('communaute.html', user=current_user)
+
+
+@app.route('/api/communaute/feed')
+@login_required
+def communaute_feed():
+    """Retourne le feed anonymisé de toutes les entreprises actives."""
+    try:
+        all_users = User.query.all()
+        cards = []
+        for u in all_users:
+            periodes = PeriodeEntreprise.query.filter_by(user_id=u.id).order_by(PeriodeEntreprise.date_upload.desc()).all()
+            if not periodes:
+                continue
+            profile = UserProfile.query.filter_by(user_id=u.id).first()
+            prefs   = UserPreferences.query.filter_by(user_id=u.id).first()
+            is_public = (prefs and prefs.profil_public)
+            secteur     = (profile.secteur    if profile and profile.secteur    else 'Non renseigné')
+            nb_employes = (profile.nb_employes if profile and profile.nb_employes else '—')
+            nom_entreprise = (profile.nom_entreprise if profile and profile.nom_entreprise else '') if is_public else ''
+
+            derniere = periodes[0]
+            note = derniere.note or '—'
+            score = round(derniere.score, 1) if derniere.score else None
+
+            # Evolution entre les 2 dernières périodes
+            evolution = None
+            if len(periodes) >= 2 and periodes[0].score and periodes[1].score:
+                evolution = round(periodes[0].score - periodes[1].score, 1)
+
+            nb_kpis = KpiSuivi.query.filter_by(user_id=u.id).count()
+            nb_periodes = len(periodes)
+            derniere_activite = derniere.date_upload.strftime('%d/%m/%Y') if derniere.date_upload else '—'
+
+            is_me = (u.id == current_user.id)
+
+            cards.append({
+                'id':               u.id,
+                'is_me':            is_me,
+                'is_public':        is_public,
+                'nom_entreprise':   nom_entreprise,
+                'secteur':          secteur,
+                'nb_employes':      nb_employes,
+                'note':             note,
+                'score':            score,
+                'evolution':        evolution,
+                'nb_kpis':          nb_kpis,
+                'nb_periodes':      nb_periodes,
+                'derniere_activite': derniere_activite,
+            })
+
+        # Ma carte en premier, puis tri par score desc
+        cards.sort(key=lambda c: (0 if c['is_me'] else 1, -(c['score'] or 0)))
+        return jsonify({'success': True, 'cards': cards, 'total': len(cards)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/communaute/opt-in', methods=['POST'])
+@login_required
+def communaute_opt_in():
+    """Toggle la visibilité publique du profil."""
+    try:
+        prefs = UserPreferences.query.filter_by(user_id=current_user.id).first()
+        if not prefs:
+            prefs = UserPreferences(user_id=current_user.id)
+            db.session.add(prefs)
+        prefs.profil_public = not prefs.profil_public
+        db.session.commit()
+        return jsonify({'success': True, 'profil_public': prefs.profil_public})
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
