@@ -1893,6 +1893,28 @@ def communaute_opt_in():
 
 
 # ─────────────────────────────────────────
+# ADMIN TEMPORAIRE — à supprimer après usage
+# ─────────────────────────────────────────
+@app.route('/admin/vider-comptes/<secret>')
+def admin_vider_comptes(secret):
+    if secret != os.environ.get('ADMIN_SECRET', 'boussole-admin-2025'):
+        return 'Accès refusé', 403
+    try:
+        PasswordResetToken.query.delete()
+        ValeurKpi.query.delete()
+        PeriodeEntreprise.query.delete()
+        KpiSuivi.query.delete()
+        UserPreferences.query.delete()
+        UserProfile.query.delete()
+        User.query.delete()
+        db.session.commit()
+        return '<h2 style="font-family:sans-serif;color:green">✓ Tous les comptes supprimés. <a href="/inscription">Créer un nouveau compte</a></h2>'
+    except Exception as e:
+        db.session.rollback()
+        return f'Erreur : {e}', 500
+
+
+# ─────────────────────────────────────────
 # INIT DB + LANCEMENT
 # ─────────────────────────────────────────
 with app.app_context():
