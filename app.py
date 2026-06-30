@@ -451,6 +451,8 @@ def analyse():
             if len(numeric_columns) < 2:
                 return jsonify({'success': False, 'error': "Minimum 2 colonnes numériques requises."})
 
+            if not GROQ_API_KEY:
+                return jsonify({'success': False, 'error': "Analyse IA non disponible : clé API manquante. Configurez GROQ_API_KEY dans les variables d'environnement."})
             client = groq.Groq(api_key=GROQ_API_KEY)
             choix_cible = client.chat.completions.create(
                 model='llama-3.3-70b-versatile',
@@ -563,6 +565,8 @@ Colonnes : {numeric_columns}'''}]
             if 'stats' not in session:
                 return jsonify({'success': False, 'error': "Veuillez d'abord charger un fichier."})
 
+        if not GROQ_API_KEY:
+            return jsonify({'success': False, 'error': "Analyse IA non disponible : clé API manquante. Configurez GROQ_API_KEY dans les variables d'environnement."})
         client = groq.Groq(api_key=GROQ_API_KEY)
         history = session.get('chat_history', [])
 
@@ -720,6 +724,8 @@ def _generer_resume_ia(note, score, kpis_valeurs, kpis_precedents):
     kpis_str = ', '.join(f"{k}={v}" for k, v in kpis_valeurs.items())
     prev_str = (', '.join(f"{k}={v}" for k, v in kpis_precedents.items())
                 if kpis_precedents else 'première période')
+    if not GROQ_API_KEY:
+        return {'resume': None, 'signal_fort': None, 'alerte': None, 'conseil': None}
     try:
         client_groq = groq.Groq(api_key=GROQ_API_KEY)
         prompt = f"""Tu es consultant Boussole. Analyse la période pour un dirigeant de PME.
@@ -1673,6 +1679,7 @@ def parametres_supprimer_compte():
     try:
         uid = current_user.id
         logout_user()
+        PasswordResetToken.query.filter_by(user_id=uid).delete()
         ValeurKpi.query.filter_by(user_id=uid).delete()
         PeriodeEntreprise.query.filter_by(user_id=uid).delete()
         KpiSuivi.query.filter_by(user_id=uid).delete()
@@ -1893,28 +1900,6 @@ def communaute_opt_in():
 
 
 # ─────────────────────────────────────────
-# ADMIN TEMPORAIRE — à supprimer après usage
-# ─────────────────────────────────────────
-@app.route('/admin/vider-comptes/<secret>')
-def admin_vider_comptes(secret):
-    if secret != os.environ.get('ADMIN_SECRET', 'boussole-admin-2025'):
-        return 'Accès refusé', 403
-    try:
-        PasswordResetToken.query.delete()
-        ValeurKpi.query.delete()
-        PeriodeEntreprise.query.delete()
-        KpiSuivi.query.delete()
-        UserPreferences.query.delete()
-        UserProfile.query.delete()
-        User.query.delete()
-        db.session.commit()
-        return '<h2 style="font-family:sans-serif;color:green">✓ Tous les comptes supprimés. <a href="/inscription">Créer un nouveau compte</a></h2>'
-    except Exception as e:
-        db.session.rollback()
-        return f'Erreur : {e}', 500
-
-
-# ─────────────────────────────────────────
 # INIT DB + LANCEMENT
 # ─────────────────────────────────────────
 with app.app_context():
@@ -1922,13 +1907,13 @@ with app.app_context():
     # Migration: ajouter les colonnes ajoutées après la création initiale
     with db.engine.connect() as conn:
         for sql in [
-            "ALTER TABLE user_preferences ADD COLUMN profil_public BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS profil_public BOOLEAN DEFAULT FALSE",
         ]:
             try:
                 conn.execute(db.text(sql))
                 conn.commit()
             except Exception:
-                pass  # colonne déjà existante
+                pass
 
 if __name__ == '__main__':
     app.run(debug=True)
