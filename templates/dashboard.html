@@ -788,6 +788,28 @@
 
     <!-- ===== ACCUEIL ===== -->
     <div id="homeContent">
+        <!-- Carte état dynamique — visible si des données existent -->
+        <div id="homeDashState" style="display:none;margin-bottom:1.5rem">
+            <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:1.5rem 2rem;align-items:center;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1.5rem 2rem">
+                <div style="text-align:center">
+                    <div id="homeNoteBadge" class="note-badge note-C">—</div>
+                    <div style="font-size:0.72rem;color:var(--text-sub);margin-top:0.3rem;font-weight:700;letter-spacing:.04em">SANTÉ</div>
+                </div>
+                <div style="min-width:0">
+                    <div style="font-weight:800;font-size:1.1rem;color:var(--text-main)" id="homeEntrepriseName">—</div>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin-top:0.15rem" id="homePeriodeInfo"></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem" id="homeKpiPills"></div>
+                </div>
+                <div style="text-align:center;cursor:pointer;padding:0.5rem;border-radius:12px;transition:background 0.15s" onclick="switchTab('alertes')" title="Voir les alertes">
+                    <div id="homeAlertCount" style="font-size:2rem;font-weight:900;color:var(--success)">—</div>
+                    <div style="font-size:0.7rem;color:var(--text-sub);font-weight:700;letter-spacing:.04em">ALERTES</div>
+                </div>
+                <div style="text-align:center;cursor:pointer;padding:0.5rem;border-radius:12px;transition:background 0.15s" onclick="switchTab('evolution')" title="Voir les périodes">
+                    <div id="homePeriodesCount" style="font-size:2rem;font-weight:900;color:var(--primary)">0</div>
+                    <div style="font-size:0.7rem;color:var(--text-sub);font-weight:700;letter-spacing:.04em">PÉRIODES</div>
+                </div>
+            </div>
+        </div>
         <!-- Hero -->
         <div style="text-align:center;padding:2.5rem 1rem 1.5rem">
             <div class="hero-badge"><i class="fa-solid fa-star"></i> Fait pour les PME françaises</div>
@@ -1107,9 +1129,14 @@
         <!-- SECTION : COMPARAISON N vs N-1 -->
         <div id="evoSec-comparaison" style="display:none">
             <div class="card">
-                <div class="section-title">
+                <div class="section-title" style="flex-wrap:wrap;gap:0.75rem">
                     <i class="fa-solid fa-scale-balanced" style="color:#8b5cf6"></i>
-                    Période actuelle vs précédente
+                    Comparaison de périodes
+                    <div style="margin-left:auto;display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">
+                        <select id="compPer1" onchange="renderComparaisonSelective()" style="padding:0.3rem 0.6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card-bg);color:var(--text-main);font-size:0.82rem;min-width:130px"></select>
+                        <span style="color:var(--text-sub);font-size:0.85rem;font-weight:700">→</span>
+                        <select id="compPer2" onchange="renderComparaisonSelective()" style="padding:0.3rem 0.6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card-bg);color:var(--text-main);font-size:0.82rem;min-width:130px"></select>
+                    </div>
                 </div>
                 <div id="evoComparaisonZone"></div>
             </div>
@@ -1129,6 +1156,9 @@
                 <div class="section-title">
                     <i class="fa-solid fa-timeline" style="color:var(--success)"></i>
                     Historique des périodes
+                    <button class="btn-sm" onclick="exporterCSV()" style="margin-left:auto;padding:0.32rem 0.9rem;font-size:0.8rem">
+                        <i class="fa-solid fa-download"></i> Exporter CSV
+                    </button>
                 </div>
                 <div id="evoHistorique"></div>
             </div>
@@ -1213,20 +1243,25 @@
         </div>
         <div id="alertesMain" style="display:none">
             <div class="card" style="margin-bottom:1.5rem">
-                <div style="display:flex;gap:2rem;align-items:center;flex-wrap:wrap">
-                    <div style="text-align:center">
-                        <div id="alertesCritCount" style="font-size:2.5rem;font-weight:900;color:var(--danger)">0</div>
-                        <div style="font-size:0.78rem;font-weight:700;color:var(--text-sub)">CRITIQUE(S)</div>
+                <div style="display:flex;gap:1.75rem;align-items:center;flex-wrap:wrap">
+                    <div style="text-align:center;min-width:56px">
+                        <div id="alertesCritCount" style="font-size:2.4rem;font-weight:900;color:var(--danger)">0</div>
+                        <div style="font-size:0.72rem;font-weight:700;color:var(--text-sub);letter-spacing:.04em">CRITIQUE(S)</div>
                     </div>
-                    <div style="text-align:center">
-                        <div id="alertesWarnCount" style="font-size:2.5rem;font-weight:900;color:var(--warning)">0</div>
-                        <div style="font-size:0.78rem;font-weight:700;color:var(--text-sub)">ATTENTION</div>
+                    <div style="text-align:center;min-width:56px">
+                        <div id="alertesWarnCount" style="font-size:2.4rem;font-weight:900;color:var(--warning)">0</div>
+                        <div style="font-size:0.72rem;font-weight:700;color:var(--text-sub);letter-spacing:.04em">ATTENTION</div>
                     </div>
-                    <div style="flex:1;min-width:200px">
-                        <div style="font-size:0.85rem;color:var(--text-sub);line-height:1.6">
-                            Seuils : <strong>Critique</strong> si variation &gt; ±25% · <strong>Attention</strong> si variation &gt; ±15%
+                    <div style="text-align:center;min-width:56px">
+                        <div id="alertesOkCount" style="font-size:2.4rem;font-weight:900;color:var(--success)">0</div>
+                        <div style="font-size:0.72rem;font-weight:700;color:var(--text-sub);letter-spacing:.04em">NORMAL</div>
+                    </div>
+                    <div style="flex:1;min-width:180px">
+                        <div id="alertesDistBar" style="display:flex;border-radius:6px;overflow:hidden;height:7px;margin-bottom:0.6rem;background:var(--border)"></div>
+                        <div style="font-size:0.82rem;color:var(--text-sub);line-height:1.6">
+                            <strong>Critique</strong> si variation &gt; ±25% · <strong>Attention</strong> si variation &gt; ±15%
                         </div>
-                        <div id="alertesPeriodeInfo" style="font-size:0.85rem;color:var(--text-sub);margin-top:0.3rem"></div>
+                        <div id="alertesPeriodeInfo" style="font-size:0.82rem;color:var(--text-sub);margin-top:0.25rem"></div>
                     </div>
                     <button class="btn-sm" onclick="chargerAlertes()"><i class="fa-solid fa-rotate"></i> Rafraîchir</button>
                 </div>
@@ -1251,6 +1286,28 @@
             <button class="btn-sm" onclick="switchTab('evolution')"><i class="fa-solid fa-arrow-right"></i> Aller à Mon tableau de bord</button>
         </div>
         <div id="whatifMain" style="display:none">
+            <!-- Graphique de sensibilité -->
+            <div class="card" style="margin-bottom:1.25rem">
+                <div class="section-title" style="font-size:1rem;margin-bottom:0.75rem;border:none;padding:0">
+                    <i class="fa-solid fa-chart-bar" style="color:#8b5cf6"></i>
+                    Poids de chaque variable sur votre score
+                </div>
+                <div style="position:relative;height:160px"><canvas id="whatifImportanceChart"></canvas></div>
+                <div style="font-size:0.78rem;color:var(--text-sub);margin-top:0.5rem">
+                    <span style="color:var(--danger);font-weight:700">Rouge</span> = influence forte (&gt;30%) ·
+                    <span style="color:var(--warning);font-weight:700">Orange</span> = influence moyenne (&gt;15%) ·
+                    <span style="color:var(--text-sub);font-weight:700">Gris</span> = influence faible
+                </div>
+            </div>
+            <!-- Scénarios sauvegardés -->
+            <div id="whatifScenariosBox" style="display:none;margin-bottom:1.25rem">
+                <div class="card" style="padding:1rem 1.5rem">
+                    <div class="section-title" style="font-size:0.9rem;border:none;padding:0;margin-bottom:0.75rem">
+                        <i class="fa-solid fa-bookmark" style="color:var(--primary)"></i> Scénarios sauvegardés
+                    </div>
+                    <div id="whatifScenariosList" style="display:flex;flex-wrap:wrap;gap:0.5rem"></div>
+                </div>
+            </div>
             <div class="card">
                 <div class="section-title" style="font-size:1rem;margin-bottom:0.5rem">
                     <i class="fa-solid fa-sliders" style="color:var(--primary)"></i>
@@ -1265,6 +1322,9 @@
                     </button>
                     <button class="btn-outline" onclick="resetSliders()">
                         <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+                    </button>
+                    <button class="btn-outline" onclick="sauvegarderScenario()" style="border-color:var(--primary);color:var(--primary)">
+                        <i class="fa-solid fa-bookmark"></i> Sauvegarder
                     </button>
                     <span id="whatifCalcLoading" style="display:none;color:var(--primary);font-size:0.9rem;font-weight:700">
                         <i class="fa-solid fa-circle-notch fa-spin"></i> Calcul IA en cours...
@@ -1305,14 +1365,41 @@
             <p>Générez en un clic un rapport exécutif propre et structuré — prêt à partager avec votre banquier, expert-comptable ou vos associés.</p>
         </div>
         <div class="card">
-            <div class="section-title" style="font-size:1rem;margin-bottom:1rem">
-                <i class="fa-solid fa-database" style="color:var(--primary)"></i> Données incluses dans le rapport
+            <!-- Sélecteur de période -->
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+                <div class="section-title" style="font-size:1rem;border:none;padding:0;margin:0">
+                    <i class="fa-solid fa-database" style="color:var(--primary)"></i> Période à exporter
+                </div>
+                <select id="synthesePeriodeSelect" style="padding:0.35rem 0.7rem;border:1.5px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--text-main);font-size:0.88rem;min-width:180px" onchange="afficherDonneesPeriodeSelectionnee()"></select>
             </div>
-            <div id="syntheseDataInfo" style="color:var(--text-sub);font-size:0.95rem;margin-bottom:0.5rem">Chargement...</div>
-            <div id="syntheseKpiList" style="margin-bottom:1.5rem"></div>
+            <div id="syntheseDataInfo" style="color:var(--text-sub);font-size:0.9rem;margin-bottom:0.5rem">Chargement...</div>
+            <div id="syntheseKpiList" style="margin-bottom:0.75rem"></div>
+            <div id="syntheseIaResume" style="display:none;margin-bottom:1.25rem;padding:0.85rem 1rem;background:var(--primary-50);border:1px solid var(--primary-light);border-radius:10px;font-size:0.87rem;line-height:1.6;color:var(--text-main)"></div>
+
+            <!-- Sections à inclure -->
+            <div style="margin-bottom:1.25rem">
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text-sub);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.04em">
+                    <i class="fa-solid fa-list-check" style="color:var(--primary)"></i> Sections du rapport
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;background:var(--bg-alt);padding:0.35rem 0.75rem;border-radius:20px;border:1.5px solid var(--border)">
+                        <input type="checkbox" id="inclResume" checked style="accent-color:var(--primary)"> Résumé IA
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;background:var(--bg-alt);padding:0.35rem 0.75rem;border-radius:20px;border:1.5px solid var(--border)">
+                        <input type="checkbox" id="inclKpis" checked style="accent-color:var(--primary)"> KPIs détaillés
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;background:var(--bg-alt);padding:0.35rem 0.75rem;border-radius:20px;border:1.5px solid var(--border)">
+                        <input type="checkbox" id="inclEvolution" checked style="accent-color:var(--primary)"> Évolution
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;background:var(--bg-alt);padding:0.35rem 0.75rem;border-radius:20px;border:1.5px solid var(--border)">
+                        <input type="checkbox" id="inclRecom" checked style="accent-color:var(--primary)"> Recommandations
+                    </label>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label><i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i> Notes ou commentaires à ajouter (optionnel)</label>
-                <textarea id="syntheseNotes" rows="4" style="width:100%;padding:0.85rem;border:1px solid var(--border);border-radius:10px;font-size:0.95rem;resize:vertical;color:var(--text-main);background:var(--card-bg)" placeholder="Ajoutez vos observations, contexte ou notes supplémentaires..."></textarea>
+                <textarea id="syntheseNotes" rows="3" style="width:100%;padding:0.85rem;border:1px solid var(--border);border-radius:10px;font-size:0.92rem;resize:vertical;color:var(--text-main);background:var(--card-bg)" placeholder="Ajoutez vos observations, contexte ou notes supplémentaires..."></textarea>
             </div>
             <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
                 <button class="btn" id="synthesePdfBtn" onclick="exporterPDF()" style="max-width:280px">
@@ -1696,8 +1783,41 @@ function chargerHistorique() {
         if(data.success && data.historique && data.historique.length > 0) {
             evoDonnees = data;
             renderEvoDashboard(data);
+            updateHomeState(data);
         }
     }).catch(() => {});
+}
+
+function updateHomeState(data) {
+    const hist = data.historique || [];
+    if (!hist.length) return;
+    const d = hist[hist.length - 1];
+    document.getElementById('homeDashState').style.display = 'block';
+    const badge = document.getElementById('homeNoteBadge');
+    badge.textContent = d.note;
+    badge.className = 'note-badge note-' + d.note;
+    document.getElementById('homeEntrepriseName').textContent = data.entreprise || 'Votre entreprise';
+    document.getElementById('homePeriodeInfo').textContent =
+        `Dernière période : ${d.label} · ${d.date} · Score ${d.score}/100`;
+    document.getElementById('homePeriodesCount').textContent = hist.length;
+    const pills = Object.entries(d.valeurs).slice(0, 5)
+        .map(([k, v]) => `<span style="font-size:0.78rem;background:var(--primary-light);color:var(--primary);padding:0.2rem 0.6rem;border-radius:20px;font-weight:700">${k} : ${formatNum(v)}</span>`)
+        .join('');
+    document.getElementById('homeKpiPills').innerHTML = pills;
+    if (hist.length >= 2) {
+        fetch('/alertes').then(r => r.json()).then(alertData => {
+            if (!alertData.success) return;
+            const alertes = alertData.alertes || [];
+            const crit = alertes.filter(a => a.niveau === 'critique').length;
+            const warn = alertes.filter(a => a.niveau === 'attention').length;
+            const total = crit + warn;
+            const el = document.getElementById('homeAlertCount');
+            el.textContent = total;
+            el.style.color = crit > 0 ? 'var(--danger)' : (warn > 0 ? 'var(--warning)' : 'var(--success)');
+        }).catch(() => {});
+    } else {
+        document.getElementById('homeAlertCount').textContent = '—';
+    }
 }
 
 function renderEvoDashboard(data) {
@@ -1732,6 +1852,25 @@ function afficherScore(note, score, nbPeriodes) {
     document.getElementById('evoNbPeriodes').textContent = nbPeriodes || 0;
 }
 
+/* ── SPARKLINE SVG ── */
+function renderSparkline(hist, kpi) {
+    const vals = hist.map(p => p.valeurs[kpi] ?? null).filter(v => v !== null);
+    if (vals.length < 2) return '';
+    const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1;
+    const pts = vals.map((v, i) => {
+        const x = Math.round((i / (vals.length - 1)) * 56);
+        const y = Math.round(14 - ((v - mn) / rng) * 12);
+        return `${x},${y}`;
+    }).join(' ');
+    const lastTrend = vals[vals.length - 1] - vals[vals.length - 2];
+    const color = lastTrend >= 0 ? '#16a34a' : '#dc2626';
+    const lx = 56, ly = Math.round(14 - ((vals[vals.length - 1] - mn) / rng) * 12);
+    return `<svg width="60" height="18" viewBox="0 0 60 18" style="display:block;overflow:visible;flex-shrink:0">
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${lx}" cy="${ly}" r="2.5" fill="${color}"/>
+    </svg>`;
+}
+
 /* ── KPI CARDS ── */
 function renderKpiCards(hist, averages) {
     const derniere = hist[hist.length - 1];
@@ -1751,8 +1890,12 @@ function renderKpiCards(hist, averages) {
         const avg = averages[nom] !== undefined
             ? `<div style="font-size:0.73rem;color:var(--text-sub);margin-top:0.2rem">Moy. toutes périodes : ${formatNum(averages[nom])}</div>`
             : '';
+        const spark = renderSparkline(hist, nom);
         html += `<div class="kpi-evo-card">
-            <div class="kpi-evo-label">${nom}</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem">
+                <div class="kpi-evo-label" style="min-width:0;flex:1">${nom}</div>
+                ${spark}
+            </div>
             <div class="kpi-evo-val">${formatNum(val)}</div>
             ${deltaHtml}${avg}
         </div>`;
@@ -1880,27 +2023,61 @@ function renderPredictions(hist, serverPreds) {
     });
 }
 
-/* ── COMPARAISON N vs N-1 ── */
+/* ── COMPARAISON ── */
 function renderComparaison(hist) {
     const zone = document.getElementById('evoComparaisonZone');
     if(hist.length < 2) {
         zone.innerHTML = '<div style="color:var(--text-sub);text-align:center;padding:2rem">Enregistrez au moins 2 périodes pour voir la comparaison.</div>';
         return;
     }
-    const actuel = hist[hist.length-1].valeurs, precedent = hist[hist.length-2].valeurs;
+    const per1 = document.getElementById('compPer1');
+    const per2 = document.getElementById('compPer2');
+    if(per1 && per2) {
+        const opts = hist.map((p, i) => `<option value="${i}">${p.label}</option>`).join('');
+        per1.innerHTML = opts;
+        per2.innerHTML = opts;
+        per1.value = hist.length - 2;
+        per2.value = hist.length - 1;
+    }
+    _renderComparaisonPair(hist[hist.length-2], hist[hist.length-1]);
+}
+
+function renderComparaisonSelective() {
+    const hist = evoDonnees.historique || [];
+    const idx1 = parseInt(document.getElementById('compPer1').value);
+    const idx2 = parseInt(document.getElementById('compPer2').value);
+    if(isNaN(idx1) || isNaN(idx2) || !hist[idx1] || !hist[idx2]) return;
+    _renderComparaisonPair(hist[idx1], hist[idx2]);
+}
+
+function _renderComparaisonPair(p1, p2) {
+    const actuel = p2.valeurs, precedent = p1.valeurs;
     const rows = Object.keys(actuel).filter(k => precedent[k] != null && precedent[k] !== 0).map(kpi => {
         const delta = actuel[kpi] - precedent[kpi];
         const pct = (delta / Math.abs(precedent[kpi]) * 100).toFixed(1);
         const cls = delta > 0 ? 'trend-up' : (delta < 0 ? 'trend-down' : 'trend-flat');
         const arrow = delta > 0 ? '▲' : (delta < 0 ? '▼' : '—');
-        return `<tr><td>${kpi}</td><td>${formatNum(precedent[kpi])}</td><td>${formatNum(actuel[kpi])}</td>
+        const absBar = Math.min(Math.abs(parseFloat(pct)), 100);
+        const barColor = delta > 0 ? 'var(--success)' : 'var(--danger)';
+        return `<tr>
+            <td>${kpi}</td>
+            <td>${formatNum(precedent[kpi])}</td>
+            <td style="font-weight:700">${formatNum(actuel[kpi])}</td>
             <td class="${cls}">${arrow} ${formatNum(Math.abs(delta))}</td>
-            <td class="${cls}">${parseFloat(pct)>=0?'+':''}${pct}%</td></tr>`;
+            <td class="${cls}" style="min-width:90px">
+                ${parseFloat(pct)>=0?'+':''}${pct}%
+                <div style="height:3px;background:var(--border);border-radius:3px;margin-top:3px">
+                    <div style="height:3px;width:${absBar}%;background:${barColor};border-radius:3px;transition:width .3s"></div>
+                </div>
+            </td>
+        </tr>`;
     }).join('');
-    zone.innerHTML = `<table class="comp-table">
-        <thead><tr><th>Indicateur</th><th>${hist[hist.length-2].label}</th><th>${hist[hist.length-1].label}</th><th>Variation</th><th>En %</th></tr></thead>
-        <tbody>${rows}</tbody>
-    </table>`;
+    document.getElementById('evoComparaisonZone').innerHTML = rows
+        ? `<table class="comp-table">
+            <thead><tr><th>Indicateur</th><th>${p1.label}</th><th>${p2.label}</th><th>Variation abs.</th><th>Variation %</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`
+        : '<div style="color:var(--text-sub);padding:1rem">Aucun indicateur commun entre ces deux périodes.</div>';
 }
 
 /* ── ANALYSE IA ── */
@@ -1980,6 +2157,28 @@ document.getElementById('evoForm').addEventListener('submit', function(e) {
         alert('Erreur réseau : ' + err);
     });
 });
+
+/* ── EXPORT CSV ── */
+function exporterCSV() {
+    const hist = evoDonnees.historique || [];
+    if (!hist.length) { alert('Aucune donnée à exporter.'); return; }
+    const allKpis = [...new Set(hist.flatMap(p => Object.keys(p.valeurs)))];
+    const headers = ['Période', 'Date', 'Note', 'Score', ...allKpis];
+    const rows = hist.map(p => [
+        p.label, p.date, p.note, p.score,
+        ...allKpis.map(k => p.valeurs[k] ?? '')
+    ]);
+    const csv = [headers, ...rows]
+        .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+        .join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historique_boussole_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+}
 
 function supprimerPeriode(id) {
     if(!confirm('Supprimer cette période ? Action irréversible.')) return;
@@ -2419,10 +2618,30 @@ function renderAlertes(data) {
     const alertes = data.alertes || [];
     const critCount = alertes.filter(a => a.niveau === 'critique').length;
     const warnCount = alertes.filter(a => a.niveau === 'attention').length;
+    const allKpis = evoDonnees.historique && evoDonnees.historique.length
+        ? Object.keys(evoDonnees.historique[evoDonnees.historique.length - 1].valeurs || {})
+        : [];
+    const okCount = Math.max(0, allKpis.length - critCount - warnCount);
+    const total = critCount + warnCount + okCount;
+
     document.getElementById('alertesCritCount').textContent = critCount;
     document.getElementById('alertesWarnCount').textContent = warnCount;
+    const okEl = document.getElementById('alertesOkCount');
+    if (okEl) okEl.textContent = okCount;
+
     document.getElementById('alertesPeriodeInfo').textContent =
         `Période : ${data.label_actuel || '—'} · Note ${data.note || '—'} (${data.score || 0}/100)`;
+
+    const distBar = document.getElementById('alertesDistBar');
+    if (distBar && total > 0) {
+        const critPct = (critCount / total * 100).toFixed(1);
+        const warnPct = (warnCount / total * 100).toFixed(1);
+        const okPct   = (okCount   / total * 100).toFixed(1);
+        distBar.innerHTML =
+            (critCount > 0 ? `<div style="flex:${critPct};background:var(--danger);min-width:4px" title="${critCount} critique(s)"></div>` : '') +
+            (warnCount > 0 ? `<div style="flex:${warnPct};background:var(--warning);min-width:4px" title="${warnCount} en attention"></div>` : '') +
+            (okCount   > 0 ? `<div style="flex:${okPct};background:var(--success);min-width:4px" title="${okCount} normal"></div>` : '');
+    }
 
     if (!alertes.length) {
         document.getElementById('alertesList').innerHTML =
@@ -2439,16 +2658,25 @@ function renderAlertes(data) {
     document.getElementById('alertesList').innerHTML = alertes.map(a => {
         const icon = a.niveau === 'critique' ? '🔴' : '🟡';
         const color = a.niveau === 'critique' ? 'var(--danger)' : 'var(--warning)';
+        const bgColor = a.niveau === 'critique' ? 'var(--danger-50)' : 'var(--warning-50)';
         const deltaStr = (a.delta_pct > 0 ? '+' : '') + a.delta_pct + '% vs période préc.';
+        const absBar = Math.min(Math.abs(a.delta_pct), 100);
         return `<div class="alerte-card ${a.niveau}">
             <div class="alerte-icon">${icon}</div>
             <div style="flex:1">
                 <div class="alerte-kpi">${a.kpi}</div>
-                <div class="alerte-delta" style="color:${color}">${deltaStr} · Actuel : ${formatNum(a.valeur)} · Préc. : ${formatNum(a.precedent)}</div>
+                <div class="alerte-delta" style="color:${color}">${deltaStr}</div>
+                <div style="display:flex;gap:1.5rem;font-size:0.82rem;color:var(--text-sub);margin-top:0.25rem;flex-wrap:wrap">
+                    <span>Actuel : <strong style="color:var(--text-main)">${formatNum(a.valeur)}</strong></span>
+                    <span>Précédent : <strong>${formatNum(a.precedent)}</strong></span>
+                </div>
+                <div style="height:4px;background:var(--border);border-radius:4px;margin:0.4rem 0;max-width:200px">
+                    <div style="height:4px;width:${absBar}%;background:${color};border-radius:4px;transition:width .3s"></div>
+                </div>
                 ${a.message ? `<div class="alerte-msg">${a.message}</div>` : ''}
-                ${a.action ? `<div class="alerte-action-text">→ ${a.action}</div>` : ''}
+                ${a.action ? `<div class="alerte-action-text" style="margin-top:0.4rem;padding:0.45rem 0.75rem;background:${bgColor};border-radius:6px;font-size:0.82rem;font-weight:600;color:${color}">→ ${a.action}</div>` : ''}
             </div>
-            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:${color};flex-shrink:0">${a.niveau}</div>
+            <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:${color};flex-shrink:0;letter-spacing:.04em">${a.niveau}</div>
         </div>`;
     }).join('');
 }
@@ -2483,11 +2711,90 @@ function chargerWhatif() {
         modelInfo.style.color = src === 'egal' ? 'var(--warning)' : 'var(--text-main)';
 
         renderSliders(data.kpis, data.importances_pct || {});
+        renderImportanceChart(data.importances_pct || {});
+        chargerScenarios();
         document.getElementById('whatifMain').style.display = 'block';
     }).catch(() => {
         document.getElementById('whatifLoading').style.display = 'none';
         document.getElementById('whatifEmpty').style.display = 'block';
     });
+}
+
+/* ── IMPORTANCE CHART ── */
+function renderImportanceChart(importances) {
+    const sorted = Object.entries(importances).sort((a, b) => b[1] - a[1]);
+    destroyChart('importance');
+    const ctx = document.getElementById('whatifImportanceChart');
+    if (!ctx || !sorted.length) return;
+    const colors = sorted.map(([, v]) => v >= 30 ? '#ef4444' : (v >= 15 ? '#f59e0b' : '#94a3b8'));
+    evoCharts['importance'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(([k]) => k),
+            datasets: [{ data: sorted.map(([, v]) => v),
+                backgroundColor: colors.map(c => c + '28'),
+                borderColor: colors, borderWidth: 2, borderRadius: 5 }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x}% d'influence sur le score` } } },
+            scales: {
+                x: { max: 100, ticks: { callback: v => v + '%' }, grid: { display: false } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ── SCÉNARIOS WHAT-IF ── */
+function sauvegarderScenario() {
+    const nom = prompt('Nom du scénario :');
+    if (!nom || !nom.trim()) return;
+    const ajustements = {};
+    Object.keys(whatifBaseData).forEach(kpi => {
+        const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+        const slider = document.getElementById('slider_' + key);
+        if (slider) ajustements[kpi] = parseInt(slider.value);
+    });
+    const scenarios = JSON.parse(localStorage.getItem('whatif_scenarios') || '[]');
+    scenarios.push({ nom: nom.trim(), ajustements, date: new Date().toLocaleDateString('fr-FR') });
+    localStorage.setItem('whatif_scenarios', JSON.stringify(scenarios));
+    chargerScenarios();
+}
+
+function chargerScenarios() {
+    const scenarios = JSON.parse(localStorage.getItem('whatif_scenarios') || '[]');
+    const box = document.getElementById('whatifScenariosBox');
+    const list = document.getElementById('whatifScenariosList');
+    if (!scenarios.length) { if(box) box.style.display = 'none'; return; }
+    if(box) box.style.display = 'block';
+    list.innerHTML = scenarios.map((s, i) =>
+        `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.75rem;background:var(--bg-alt);border:1.5px solid var(--border);border-radius:20px;font-size:0.83rem">
+            <span style="font-weight:700;color:var(--primary)">${s.nom}</span>
+            <span style="color:var(--text-sub);font-size:0.75rem">${s.date}</span>
+            <button onclick="chargerScenario(${i})" style="background:none;border:none;cursor:pointer;color:var(--primary);font-size:0.78rem;font-weight:700;padding:0">Charger</button>
+            <button onclick="supprimerScenario(${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:0.78rem;padding:0">✕</button>
+        </div>`
+    ).join('');
+}
+
+function chargerScenario(idx) {
+    const scenarios = JSON.parse(localStorage.getItem('whatif_scenarios') || '[]');
+    const s = scenarios[idx];
+    if (!s) return;
+    Object.entries(s.ajustements).forEach(([kpi, val]) => {
+        const key = kpi.replace(/[^a-zA-Z0-9]/g, '_');
+        const slider = document.getElementById('slider_' + key);
+        if (slider) { slider.value = val; updateSliderBadge(slider); }
+    });
+}
+
+function supprimerScenario(idx) {
+    const scenarios = JSON.parse(localStorage.getItem('whatif_scenarios') || '[]');
+    scenarios.splice(idx, 1);
+    localStorage.setItem('whatif_scenarios', JSON.stringify(scenarios));
+    chargerScenarios();
 }
 
 function renderSliders(valeurs, importances) {
@@ -2606,6 +2913,8 @@ function renderWhatifResult(data) {
 // ============================================================
 // SYNTHÈSE EXÉCUTIVE PDF
 // ============================================================
+let syntheseHistorique = [];
+
 function chargerSynthese() {
     const infoDiv = document.getElementById('syntheseDataInfo');
     const kpiDiv = document.getElementById('syntheseKpiList');
@@ -2613,18 +2922,43 @@ function chargerSynthese() {
     .then(r => r.json())
     .then(data => {
         if (!data.success || !data.historique || !data.historique.length) {
-            infoDiv.textContent = 'Aucune donnée disponible. Enregistrez d\'abord une période dans Évolution & Pilotage.';
+            infoDiv.textContent = 'Aucune donnée disponible. Enregistrez d\'abord une période dans Pilotage.';
             kpiDiv.innerHTML = '';
             return;
         }
-        const d = data.historique[data.historique.length - 1];
-        infoDiv.innerHTML = `Période : <strong>${d.label}</strong> · Note <strong>${d.note}</strong> (${d.score}/100) · Entreprise : <strong>${data.entreprise || '—'}</strong>`;
-        kpiDiv.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem">${
-            Object.entries(d.valeurs).map(([k,v]) =>
-                `<span style="background:var(--primary-light);color:var(--primary);padding:0.3rem 0.8rem;border-radius:20px;font-size:0.85rem;font-weight:700">${k} : ${formatNum(v)}</span>`
-            ).join('')
-        }</div>`;
+        syntheseHistorique = data.historique;
+        const sel = document.getElementById('synthesePeriodeSelect');
+        if (sel) {
+            sel.innerHTML = data.historique.map((p, i) =>
+                `<option value="${i}" ${i === data.historique.length - 1 ? 'selected' : ''}>${p.label} · Note ${p.note} (${p.score}/100)</option>`
+            ).join('');
+        }
+        afficherDonneesPeriodeSelectionnee();
     }).catch(() => { infoDiv.textContent = 'Erreur de chargement.'; });
+}
+
+function afficherDonneesPeriodeSelectionnee() {
+    const infoDiv = document.getElementById('syntheseDataInfo');
+    const kpiDiv = document.getElementById('syntheseKpiList');
+    const iaDiv = document.getElementById('syntheseIaResume');
+    const sel = document.getElementById('synthesePeriodeSelect');
+    const hist = syntheseHistorique;
+    if (!hist.length) return;
+    const idx = sel ? parseInt(sel.value) : hist.length - 1;
+    const d = hist[idx] || hist[hist.length - 1];
+    infoDiv.innerHTML = `Période : <strong>${d.label}</strong> · Note <strong>${d.note}</strong> (${d.score}/100) · ${d.date}`;
+    kpiDiv.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.6rem">${
+        Object.entries(d.valeurs).map(([k, v]) =>
+            `<span style="background:var(--primary-light);color:var(--primary);padding:0.28rem 0.75rem;border-radius:20px;font-size:0.82rem;font-weight:700">${k} : ${formatNum(v)}</span>`
+        ).join('')
+    }</div>`;
+    if (d.resume_ia) {
+        const ia = parseIa(d.resume_ia);
+        if (ia.resume) {
+            iaDiv.style.display = 'block';
+            iaDiv.innerHTML = `<strong><i class="fa-solid fa-robot" style="color:var(--primary)"></i> Synthèse IA :</strong> ${ia.resume}`;
+        } else { iaDiv.style.display = 'none'; }
+    } else { iaDiv.style.display = 'none'; }
 }
 
 function exporterPDF() {
@@ -2633,14 +2967,53 @@ function exporterPDF() {
     const success = document.getElementById('synthesePdfSuccess');
     const notes = document.getElementById('syntheseNotes').value.trim();
 
+    // Sections sélectionnées
+    const inclResume   = document.getElementById('inclResume')?.checked ?? true;
+    const inclKpis     = document.getElementById('inclKpis')?.checked ?? true;
+    const inclEvol     = document.getElementById('inclEvolution')?.checked ?? true;
+    const inclRecom    = document.getElementById('inclRecom')?.checked ?? true;
+
+    // Période sélectionnée
+    const sel = document.getElementById('synthesePeriodeSelect');
+    const idx = sel ? parseInt(sel.value) : (syntheseHistorique.length - 1);
+    const periode = syntheseHistorique[idx] || null;
+
+    // Construire le texte d'analyse
+    let analyseText = '';
+    if (inclResume && periode) {
+        const ia = parseIa(periode.resume_ia);
+        if (ia.resume) analyseText += `Synthèse IA : ${ia.resume}\n`;
+        if (ia.signal_fort) analyseText += `Signal fort : ${ia.signal_fort}\n`;
+        if (ia.alerte) analyseText += `Point de vigilance : ${ia.alerte}\n`;
+        if (ia.conseil) analyseText += `Conseil : ${ia.conseil}\n`;
+    }
+    if (inclKpis && periode) {
+        analyseText += '\nIndicateurs clés :\n';
+        Object.entries(periode.valeurs).forEach(([k, v]) => {
+            analyseText += `  • ${k} : ${formatNum(v)}\n`;
+        });
+    }
+    if (inclEvol && evoDonnees.historique && evoDonnees.historique.length >= 2) {
+        analyseText += '\nÉvolution (score) :\n';
+        evoDonnees.historique.forEach(p => {
+            analyseText += `  • ${p.label} : Note ${p.note} (${p.score}/100)\n`;
+        });
+    }
+    // Analyse de l'onglet Analyser (si disponible)
     const analyseEl = document.getElementById('analyseTexte');
-    const analyseText = analyseEl ? analyseEl.innerText.trim() : '';
+    const analyseFromTab = analyseEl ? analyseEl.innerText.trim() : '';
+    if (analyseFromTab) analyseText += '\n' + analyseFromTab;
+    if (notes) analyseText += '\n\nNotes : ' + notes;
+
+    // Recommandations
     const recommandations = [];
-    document.querySelectorAll('.reco-card').forEach(card => {
-        const action = card.querySelector('.reco-action');
-        const detail = card.querySelector('.reco-detail');
-        if (action) recommandations.push({ action: action.textContent.trim(), detail: detail ? detail.textContent.trim() : '' });
-    });
+    if (inclRecom) {
+        document.querySelectorAll('.reco-card').forEach(card => {
+            const action = card.querySelector('.reco-action');
+            const detail = card.querySelector('.reco-detail');
+            if (action) recommandations.push({ action: action.textContent.trim(), detail: detail ? detail.textContent.trim() : '' });
+        });
+    }
 
     btn.disabled = true;
     loading.style.display = 'inline';
@@ -2649,10 +3022,7 @@ function exporterPDF() {
     fetch('/export_pdf', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            analyse: analyseText + (notes ? '\n\nNotes : ' + notes : ''),
-            recommandations
-        })
+        body: JSON.stringify({ analyse: analyseText, recommandations })
     })
     .then(r => {
         if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'Erreur serveur'); });
